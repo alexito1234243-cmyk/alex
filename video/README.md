@@ -11,4 +11,17 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 
 Requisitos: `ffmpeg`, `pip install pycairo numpy`.
 
-Pendiente: voz en off. Ahora las duraciones salen de la longitud del texto; con voz, saldrán de la duración del audio de cada frase.
+## Voz en off
+
+Locución local con Kokoro (sherpa-onnx), sin cuentas ni pagos por uso:
+
+```sh
+sh video/get_voices.sh            # baja el modelo (~350 MB) a video/models/ (no se sube a git)
+python3 video/tierra_agujero.py   # con voz "dora" por defecto
+python3 video/tierra_agujero.py --voz alex   # voces: dora, alex, santa
+python3 video/tierra_agujero.py --sin-voz
+```
+
+Cada escena dura lo que su frase; los subtítulos se reparten por sílabas a lo largo del audio.
+Si el subtítulo lleva números o siglas, la escena define `voice="..."` con el texto hablado.
+Para comprobar la pronunciación: `sh video/get_voices.sh --check` y `python3 video/voz.py --check "frase"`.

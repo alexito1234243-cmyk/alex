@@ -1,7 +1,7 @@
 """Vídeo: ¿Por qué apagan las luces del avión al aterrizar de noche? (versión elaborada)
 
-Uso: python3 video/avion_luces.py            ->  vídeo en video/out/avion-luces/
-     python3 video/avion_luces.py --preview  ->  hoja de contactos con un fotograma por escena
+Uso: python3 video/avion_luces.py [--voz dora|alex|santa] [--sin-voz]  ->  vídeo en video/out/avion-luces/
+     python3 video/avion_luces.py --preview [png]                     ->  hoja de contactos con un fotograma por escena
 """
 import math
 import os
@@ -28,6 +28,11 @@ PANE_LIGHTS = [(_rng.uniform(0, 520), _rng.uniform(70, 330), _rng.uniform(1.5, 4
 
 GREEN_LIGHT = (0.15, 1.0, 0.45)
 RED = (0.95, 0.20, 0.22)
+
+
+def dur(fn):
+    """Duración real de la escena que dibuja fn (cambia con la locución)."""
+    return next(s.duration for s in SCENES if s.draw is fn)
 
 
 # ---------- exterior: cielo, ciudad, pista ----------
@@ -659,7 +664,7 @@ def s_shade(ctx, t):
 
 
 def s_danger(ctx, t):
-    z = 1.0 + 0.08 * ease_in_out(t / 3.4)
+    z = 1.0 + 0.08 * ease_in_out(t / dur(s_danger))
     cabin_wall(ctx, 0.5)
     fire = prog(t, 0.2, 0.6)
     glow(ctx, 540, 900, 900, (1, 0.45, 0.15), 0.18 * fire, add=True)
@@ -668,7 +673,7 @@ def s_danger(ctx, t):
 
 
 def s_floor(ctx, t):
-    cz = 1.3 * ease_in_out(t / 4.2)
+    cz = 1.3 * ease_in_out(t / dur(s_floor))
     cabin(ctx, t, light=0.14, mood=(0.55, 0.6, 1.0), cz=cz, floor_lights=1.0, exit_glow=1.0)
     ctx.rectangle(0, 0, W, 700)
     ctx.set_source(linear(0, 0, 0, 700, [(0, (0.3, 0.32, 0.4, 0.18)), (1, (0.3, 0.32, 0.4, 0))]))
@@ -689,7 +694,7 @@ SCENES = [
     Scene("…tus ojos tardan varios minutos en adaptarse.", s_adapt),
     Scene("Con la luz ya bajada, llegan preparados.", s_ready, sfx=[(0.8, "pop"), (1.2, "pop")]),
     Scene("Por eso también te piden subir la persiana.", s_shade, sfx=[(0.5, "whoosh")]),
-    Scene("Así se ve si fuera hay algún peligro.", s_danger, sfx=[(0.9, "pop")]),
+    Scene("Así se ve si hay algún peligro fuera.", s_danger, sfx=[(0.9, "pop")]),
     Scene("Y las luces del suelo te guían hasta la salida.", s_floor),
     Scene("Síguenos para más curiosidades como esta.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
@@ -709,12 +714,19 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.join(here, "out", "avion-luces")
     os.makedirs(out, exist_ok=True)
+    narrator = None
+    if "--sin-voz" not in sys.argv:
+        from voz import Narrator
+        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "dora"
+        narrator = Narrator(voice)
     if "--preview" in sys.argv:
-        dest = sys.argv[sys.argv.index("--preview") + 1] if len(sys.argv) > sys.argv.index("--preview") + 1 else os.path.join(out, "preview.png")
-        preview(SCENES, dest)
+        i = sys.argv.index("--preview")
+        dest = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else os.path.join(out, "preview.png")
+        preview(SCENES, dest, narrator=narrator)
         print("preview:", dest)
     else:
-        total = render(SCENES, os.path.join(out, "avion-luces.mp4"), cover_png=os.path.join(out, "portada.png"), cover_at=(0, 1.8))
+        total = render(SCENES, os.path.join(out, "avion-luces.mp4"), cover_png=os.path.join(out, "portada.png"),
+                       cover_at=(0, 1.8), narrator=narrator)
         with open(os.path.join(out, "texto-del-post.txt"), "w") as f:
             f.write(POST)
         print(f"OK: {total:.1f} s")

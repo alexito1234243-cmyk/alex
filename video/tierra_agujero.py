@@ -5,8 +5,8 @@ Datos: con la densidad real de la Tierra, la caída de polo a polo dura unos 38 
 28.000 km/h (28.460 km/h con densidad uniforme, algo más con la real). El pozo
 de Kola llegó a 12.262 m. Núcleo interno: unos 5.200 °C; superficie del Sol: unos 5.500 °C.
 
-Uso: python3 video/tierra_agujero.py            ->  vídeo en video/out/tierra-agujero/
-     python3 video/tierra_agujero.py --preview  ->  hoja de contactos
+Uso: python3 video/tierra_agujero.py [--voz dora|alex|santa] [--sin-voz]  ->  vídeo en video/out/tierra-agujero/
+     python3 video/tierra_agujero.py --preview [png]                     ->  hoja de contactos
 """
 import math
 import os
@@ -45,6 +45,11 @@ INNER_CORE = (1.0, 0.97, 0.80)
 
 def kmh(v):
     return f"{v:,.0f}".replace(",", ".")
+
+
+def dur(fn):
+    """Duración real de la escena que dibuja fn (cambia con la locución)."""
+    return next(s.duration for s in SCENES if s.draw is fn)
 
 
 # ---------- fondo y planeta ----------
@@ -277,7 +282,7 @@ def hud(ctx, title, value, unit, a=1.0, x=600, y=210):
 
 def s_hook(ctx, t):
     space(ctx, t)
-    z = 1 + 0.07 * ease_in_out(t / 4.6)
+    z = 1 + 0.07 * ease_in_out(t / dur(s_hook))
     ctx.translate(540, 760)
     ctx.scale(z, z)
     ctx.translate(-540, -760)
@@ -314,7 +319,7 @@ def s_hook(ctx, t):
 def s_fall(ctx, t):
     space(ctx, t)
     section(ctx, t)
-    phi = 1.15 * (t / 4.0)
+    phi = 1.15 * t / dur(s_fall)
     faller(ctx, t, phi)
     layer_labels(ctx, t, 0.6)
     hud(ctx, "VELOCIDAD", kmh(VMAX * math.sin(phi)), "km/h", a=prog(t, 0.2, 0.4))
@@ -322,7 +327,7 @@ def s_fall(ctx, t):
 
 def s_center(ctx, t):
     space(ctx, t)
-    zt = ease_in_out(t / 3.7)
+    zt = ease_in_out(t / dur(s_center))
     z = 1 + 0.25 * zt
     ctx.save()
     ctx.translate(CX, CY)
@@ -339,14 +344,14 @@ def s_center(ctx, t):
 
 def s_weightless(ctx, t):
     space(ctx, t)
-    z = 1.25 + 0.1 * ease_in_out(t / 3.1)
+    z = 1.25 + 0.1 * ease_in_out(t / dur(s_weightless))
     ctx.save()
     ctx.translate(CX, CY)
     ctx.scale(z, z)
     ctx.translate(-CX, -CY)
     section(ctx, t)
     phi = math.pi / 2 + 0.06 * (t - 1.5)
-    rot = math.pi * ease_in_out(t / 3.1)
+    rot = math.pi * ease_in_out(t / dur(s_weightless))
     y = CY - R_FALL * math.cos(phi) + 6 * math.sin(t * 2.5)
     soft_ellipse(ctx, CX, y, 95, 95, (0.05, 0.02, 0.02), 0.6)
     astronaut(ctx, CX, y, 0.42, rot, "float", t * 0.3)
@@ -360,10 +365,11 @@ def s_weightless(ctx, t):
 def s_other_side(ctx, t):
     space(ctx, t)
     section(ctx, t)
-    phi = math.pi / 2 + (math.pi / 2) * ease_in_out(t / 3.0) if t < 3.0 else math.pi
+    arrive = dur(s_other_side) - 0.35
+    phi = math.pi / 2 + (math.pi / 2) * ease_in_out(t / arrive) if t < arrive else math.pi
     faller(ctx, t, min(phi, math.pi - 0.001))
     hud(ctx, "VELOCIDAD", kmh(VMAX * abs(math.sin(phi))), "km/h")
-    p = prog(t, 2.6, 0.5)
+    p = prog(t, arrive - 0.4, 0.5)
     if p > 0:
         ty = CY + R_FALL + 40
         glow(ctx, CX, ty, 120, (1.0, 0.8, 0.24), 0.5 * p, add=True)
@@ -559,14 +565,17 @@ def s_cta(ctx, t):
 
 SCENES = [
     Scene("¿Qué pasaría si saltaras por un agujero que atraviesa la Tierra?", s_hook, sfx=[(2.7, "whoosh")]),
-    Scene("Sin aire que te frene, caerías cada vez más rápido…", s_fall, sfx=[(0.6, "pop"), (0.95, "pop"), (1.3, "pop"), (1.65, "pop"), (1.0, "riser")]),
-    Scene("…y cruzarías el centro a más de 28.000 km/h.", s_center, sfx=[(2.2, "boom")]),
+    Scene("Si no hubiera aire, caerías cada vez más rápido…", s_fall, sfx=[(0.6, "pop"), (0.95, "pop"), (1.3, "pop"), (1.65, "pop"), (1.0, "riser")]),
+    Scene("…y cruzarías el centro a más de 28.000 km/h.", s_center,
+          voice="y cruzarías el centro a más de veintiocho mil kilómetros por hora.", sfx=[(2.2, "boom")]),
     Scene("Justo en el centro no pesarías nada.", s_weightless),
     Scene("Después irías frenando hasta asomar al otro lado.", s_other_side, sfx=[(2.6, "pop")]),
     Scene("¿Cuánto tardarías? Unos 38 minutos.", s_time, duration=3.2,
+          voice="¿Cuánto tardarías? Unos treinta y ocho minutos.",
           sfx=[(0.3 + k * 0.08, "tick") for k in range(20)] + [(1.95, "pop")]),
     Scene("Y si nadie te agarra, volverías a caer… una y otra vez.", s_forever, sfx=[(1.2, "pop")]),
-    Scene("Pero el agujero más hondo que existe solo llega a 12 km.", s_kola, sfx=[(1.5, "pop"), (2.2, "pop")]),
+    Scene("Pero el agujero más hondo que existe solo llega a 12 km.", s_kola,
+          voice="Pero el agujero más hondo que existe solo llega a doce kilómetros.", sfx=[(1.5, "pop"), (2.2, "pop")]),
     Scene("Y abajo hace tanto calor como en la superficie del Sol.", s_hot, sfx=[(0.0, "pop"), (1.0, "pop")]),
     Scene("Síguenos para más curiosidades como esta.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
@@ -586,13 +595,19 @@ if __name__ == "__main__":
     here = os.path.dirname(os.path.abspath(__file__))
     out = os.path.join(here, "out", "tierra-agujero")
     os.makedirs(out, exist_ok=True)
+    narrator = None
+    if "--sin-voz" not in sys.argv:
+        from voz import Narrator
+        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "dora"
+        narrator = Narrator(voice)
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")
-        dest = sys.argv[i + 1] if len(sys.argv) > i + 1 else os.path.join(out, "preview.png")
-        preview(SCENES, dest)
+        dest = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else os.path.join(out, "preview.png")
+        preview(SCENES, dest, narrator=narrator)
         print("preview:", dest)
     else:
-        total = render(SCENES, os.path.join(out, "tierra-agujero.mp4"), cover_png=os.path.join(out, "portada.png"), cover_at=(0, 2.2))
+        total = render(SCENES, os.path.join(out, "tierra-agujero.mp4"), cover_png=os.path.join(out, "portada.png"),
+                       cover_at=(0, 2.2), narrator=narrator)
         with open(os.path.join(out, "texto-del-post.txt"), "w") as f:
             f.write(POST)
         print(f"OK: {total:.1f} s")

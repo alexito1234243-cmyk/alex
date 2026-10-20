@@ -6,6 +6,7 @@ siguiente y genera la pista de sonido (ambiente + efectos).
 """
 import math
 import random
+import re
 import subprocess
 import wave
 from dataclasses import dataclass, field
@@ -233,17 +234,52 @@ class Scene:
     text: str
     draw: Callable[[cairo.Context, float], None]
     duration: float = 0.0
-    sfx: list = field(default_factory=list)  # [(segundo, "pop" | "chime" | "thunk" | "whoosh")]
+    sfx: list = field(default_factory=list)  # [(segundo, "pop" | "chime" | "thunk" | "whoosh" | ...)]
+    voice: str = ""  # lo que dice la voz si no coincide con el subtítulo (números, siglas)
+    audio: object = field(default=None, repr=False)
 
     def __post_init__(self):
+        self.min_duration = self.duration
         if not self.duration:
             self.duration = max(2.6, 0.29 * len(self.text.split()) + 1.1)
 
 
-def caption(ctx, scene, t, y0=1560, size=82):
+VOICE_LEAD = 0.12
+
+
+def narrate(scenes, narrator, sr=44100):
+    """Genera la locución de cada escena y ajusta su duración a la de la frase."""
+    for sc in scenes:
+        sc.audio = narrator.say(sc.voice or sc.text)
+        sc.duration = max(VOICE_LEAD + len(sc.audio) / sr + 0.45, sc.min_duration, 2.2)
+
+
+def _syllables(w):
+    w = w.lower()
+    if any(ch.isdigit() for ch in w):
+        return 2 + sum(ch.isdigit() for ch in w)
+    if "km/h" in w:
+        return 7
+    if w.strip(".,;:!?¿¡…") == "km":
+        return 4
+    return max(1, len(re.findall(r"[aeiouáéíóúü]+", w))) + (0.8 if w[-1:] in ",.;:?!…" else 0)
+
+
+def word_times(scene, sr=44100):
     words = scene.text.split()
-    span = min(scene.duration * 0.7, 0.3 * len(words))
-    times = [0.06 + span * i / len(words) for i in range(len(words))]
+    if scene.audio is None:
+        span = min(scene.duration * 0.7, 0.3 * len(words))
+        return words, [0.06 + span * i / len(words) for i in range(len(words))]
+    weights = [_syllables(w) for w in words]
+    total, acc, times = sum(weights), 0.0, []
+    for w in weights:
+        times.append(VOICE_LEAD + len(scene.audio) / sr * 0.97 * acc / total)
+        acc += w
+    return words, times
+
+
+def caption(ctx, scene, t, y0=1560, size=82):
+    words, times = word_times(scene)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(size)
     space = ctx.text_extents(" ").x_advance
@@ -375,23 +411,35 @@ def synth_audio(fname, scenes, total, sr=44100, ambient=True):
         return 0.6 * np.sin(2 * np.pi * (38 + 30 * np.exp(-tt * 6)) * tt) * env_exp(L, 3.5)
 
     kinds = {"pop": pop, "whoosh": whoosh, "chime": chime, "thunk": thunk, "riser": riser, "tick": tick, "boom": boom}
+    voiced = any(sc.audio is not None for sc in scenes)
+    fx = 0.55 if voiced else 1.0  # con voz, los efectos quedan por debajo
+    voice = np.zeros(n)
     start = 0.0
     for i, sc in enumerate(scenes):
         if i:
-            add(max(0, start - 0.15), whoosh())
+            add(max(0, start - 0.15), fx * whoosh())
         for at, kind in sc.sfx:
-            add(start + at, kinds[kind]())
+            add(start + at, fx * kinds[kind]())
+        if sc.audio is not None:
+            s = int((start + VOICE_LEAD) * sr)
+            e = min(n, s + len(sc.audio))
+            voice[s:e] += sc.audio[: e - s]
         start += sc.duration
 
-    if ambient:  # zumbido de cabina: ruido marrón filtrado
+    if ambient:  # zumbido de fondo: ruido marrón filtrado, que baja cuando habla la voz
         brown = np.cumsum(rng.normal(0, 1, n))
         brown -= np.convolve(brown, np.ones(4000) / 4000, mode="same")
         brown = np.convolve(brown, np.ones(60) / 60, mode="same")
         brown /= np.max(np.abs(brown)) + 1e-9
         fade = np.clip(np.minimum(np.arange(n) / sr / 1.0, (total - np.arange(n) / sr) / 1.0), 0, 1)
-        out += 0.10 * brown * fade
+        duck = 1.0
+        if voiced:
+            env = np.convolve(np.abs(voice), np.ones(sr // 5) / (sr // 5), mode="same")
+            duck = 1 - 0.6 * np.clip(env / (env.max() + 1e-9) * 3, 0, 1)
+        out += (0.07 if voiced else 0.10) * brown * fade * duck
 
-    out = out / max(1.0, np.max(np.abs(out)) / 0.9)
+    out += voice
+    out = out / max(1.0, np.max(np.abs(out)) / 0.95)
     with wave.open(fname, "wb") as wf:
         wf.setnchannels(1)
         wf.setsampwidth(2)
@@ -422,7 +470,9 @@ def frame_surface(scenes, i, t, start, total, frame, grain):
     return surf
 
 
-def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5)):
+def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None):
+    if narrator:
+        narrate(scenes, narrator)
     grain, _keep = make_grain()
     total = sum(s.duration for s in scenes)
     audio = out_mp4.replace(".mp4", "_sfx.wav")
@@ -451,8 +501,10 @@ def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5)):
     return total
 
 
-def preview(scenes, png, at=0.8, cols=5):
+def preview(scenes, png, at=0.8, cols=5, narrator=None):
     """Hoja de contactos: un fotograma de cada escena."""
+    if narrator:
+        narrate(scenes, narrator)
     grain, _keep = make_grain()
     total = sum(s.duration for s in scenes)
     thumbs = []
