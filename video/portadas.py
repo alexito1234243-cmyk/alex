@@ -10,6 +10,7 @@ import subprocess
 import cairo
 
 import avion_luces as av
+import movil_carga as mc
 import tierra_agujero as ti
 from engine import FONT, H, W
 from rich import YELLOW, glow, linear, make_grain, radial, text
@@ -85,6 +86,17 @@ def cover_avion(grain):
     save_jpg(surf, os.path.join(HERE, "out", "avion-luces", "portada.jpg"))
 
 
+def cover_movil(grain):
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    t = 2.6
+    mc.tech_bg(ctx, t)
+    mc.phone(ctx, 540, 1130, 0.95, mc.charge_screen(82, 1.0), t)
+    finish(ctx, grain)
+    title(ctx, [("¿POR QUÉ EL MÓVIL", False), ("CARGA LENTO", False), ("DESDE EL 80 %?", True)], 270)
+    save_jpg(surf, os.path.join(HERE, "out", "movil-carga", "portada.jpg"))
+
+
 def avatar(grain, size=1080):
     """Interrogación amarilla cuyo punto es la Tierra: se lee incluso a 110 px."""
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
@@ -126,5 +138,6 @@ if __name__ == "__main__":
     grain, _keep = make_grain()
     cover_tierra(grain)
     cover_avion(grain)
+    cover_movil(grain)
     avatar(grain)
     print("OK")

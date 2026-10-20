@@ -278,6 +278,20 @@ def word_times(scene, sr=44100):
     return words, times
 
 
+def word_time(scene, needle):
+    """Instante en que la voz dice la primera palabra que contiene `needle`."""
+    words, times = word_times(scene)
+    for w, tt in zip(words, times):
+        if needle.lower() in w.lower():
+            return tt
+    raise ValueError(f"'{needle}' no está en: {scene.text}")
+
+
+def sfx_time(scene, at):
+    """Los efectos pueden ir a un segundo fijo o a una palabra: "@palabra"."""
+    return word_time(scene, at[1:]) if isinstance(at, str) else at
+
+
 def caption(ctx, scene, t, y0=1560, size=82):
     words, times = word_times(scene)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
@@ -419,7 +433,7 @@ def synth_audio(fname, scenes, total, sr=44100, ambient=True):
         if i:
             add(max(0, start - 0.15), fx * whoosh())
         for at, kind in sc.sfx:
-            add(start + at, fx * kinds[kind]())
+            add(start + sfx_time(sc, at), fx * kinds[kind]())
         if sc.audio is not None:
             s = int((start + VOICE_LEAD) * sr)
             e = min(n, s + len(sc.audio))
