@@ -1,0 +1,380 @@
+"""Motor v2: escenas a pantalla completa con degradados, luces, brillos y profundidad.
+
+Cada escena dibuja el fotograma entero con draw(ctx, t). El motor añade encima la
+viñeta, el grano, los subtítulos y la barra de progreso, funde una escena con la
+siguiente y genera la pista de sonido (ambiente + efectos).
+"""
+import math
+import random
+import subprocess
+import wave
+from dataclasses import dataclass, field
+from typing import Callable
+
+import cairo
+import numpy as np
+
+from engine import FONT, FPS, H, W, clamp, ease_in_out, ease_out_back, prog
+
+INK = (0.07, 0.07, 0.10)
+YELLOW = (1.0, 0.80, 0.24)
+TRANSITION = 0.3
+
+
+# ---------- color y pintura ----------
+
+def rgba(c, a=None):
+    if a is not None:
+        return (c[0], c[1], c[2], a)
+    return (c[0], c[1], c[2], c[3] if len(c) > 3 else 1.0)
+
+
+def mix(a, b, f):
+    return tuple(x + (y - x) * f for x, y in zip(a, b))
+
+
+def mul(c, k):
+    return tuple(min(1.0, x * k) for x in c[:3])
+
+
+def linear(x0, y0, x1, y1, stops):
+    g = cairo.LinearGradient(x0, y0, x1, y1)
+    for off, col in stops:
+        g.add_color_stop_rgba(off, *rgba(col))
+    return g
+
+
+def radial(cx, cy, r, stops, r0=0.0, fx=None, fy=None):
+    g = cairo.RadialGradient(cx if fx is None else fx, cy if fy is None else fy, r0, cx, cy, r)
+    for off, col in stops:
+        g.add_color_stop_rgba(off, *rgba(col))
+    return g
+
+
+def source(ctx, src):
+    if isinstance(src, cairo.Pattern):
+        ctx.set_source(src)
+    else:
+        ctx.set_source_rgba(*rgba(src))
+
+
+def path(ctx, pts, close=True):
+    ctx.move_to(*pts[0])
+    for p in pts[1:]:
+        ctx.line_to(*p)
+    if close:
+        ctx.close_path()
+
+
+def poly(ctx, pts, src):
+    path(ctx, pts)
+    source(ctx, src)
+    ctx.fill()
+
+
+def rr(ctx, x, y, w, h, r):
+    r = max(0.0, min(r, w / 2, h / 2))
+    ctx.new_sub_path()
+    ctx.arc(x + w - r, y + r, r, -math.pi / 2, 0)
+    ctx.arc(x + w - r, y + h - r, r, 0, math.pi / 2)
+    ctx.arc(x + r, y + h - r, r, math.pi / 2, math.pi)
+    ctx.arc(x + r, y + r, r, math.pi, 1.5 * math.pi)
+    ctx.close_path()
+
+
+def fill_rr(ctx, x, y, w, h, r, src):
+    rr(ctx, x, y, w, h, r)
+    source(ctx, src)
+    ctx.fill()
+
+
+def disc(ctx, x, y, r, src):
+    ctx.new_sub_path()
+    ctx.arc(x, y, max(r, 0.01), 0, 2 * math.pi)
+    source(ctx, src)
+    ctx.fill()
+
+
+def glow(ctx, x, y, r, col, a=1.0, add=False):
+    """Halo de luz: degradado radial que se desvanece."""
+    if r <= 0 or a <= 0:
+        return
+    if add:
+        ctx.save()
+        ctx.set_operator(cairo.OPERATOR_ADD)
+    disc(ctx, x, y, r, radial(x, y, r, [(0, rgba(col, a)), (0.25, rgba(col, a * 0.5)), (1, rgba(col, 0))]))
+    if add:
+        ctx.restore()
+
+
+def soft_ellipse(ctx, x, y, rx, ry, col, a):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(rx, ry)
+    disc(ctx, 0, 0, 1, radial(0, 0, 1, [(0, rgba(col, a)), (1, rgba(col, 0))]))
+    ctx.restore()
+
+
+def stroke(ctx, pts, col, width, close=False, cap=cairo.LINE_CAP_ROUND):
+    path(ctx, pts, close)
+    source(ctx, col)
+    ctx.set_line_width(width)
+    ctx.set_line_cap(cap)
+    ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+    ctx.stroke()
+
+
+def bezier(p0, p1, p2, p3, n=24):
+    out = []
+    for i in range(n + 1):
+        u = i / n
+        a, b, c, d = (1 - u) ** 3, 3 * u * (1 - u) ** 2, 3 * u * u * (1 - u), u ** 3
+        out.append((a * p0[0] + b * p1[0] + c * p2[0] + d * p3[0], a * p0[1] + b * p1[1] + c * p2[1] + d * p3[1]))
+    return out
+
+
+def text(ctx, s, x, y, size, col=(1, 1, 1), weight=cairo.FONT_WEIGHT_BOLD, anchor="center", outline=None, ow=8):
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, weight)
+    ctx.set_font_size(size)
+    ext = ctx.text_extents(s)
+    dx = {"center": ext.x_advance / 2, "left": 0, "right": ext.x_advance}[anchor]
+    ctx.move_to(x - dx, y + size * 0.36)
+    ctx.text_path(s)
+    if outline:
+        source(ctx, outline)
+        ctx.set_line_width(ow)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke_preserve()
+    source(ctx, col)
+    ctx.fill()
+
+
+# ---------- escenas ----------
+
+@dataclass
+class Scene:
+    text: str
+    draw: Callable[[cairo.Context, float], None]
+    duration: float = 0.0
+    sfx: list = field(default_factory=list)  # [(segundo, "pop" | "chime" | "thunk" | "whoosh")]
+
+    def __post_init__(self):
+        if not self.duration:
+            self.duration = max(2.6, 0.29 * len(self.text.split()) + 1.1)
+
+
+def caption(ctx, scene, t, y0=1560, size=82):
+    words = scene.text.split()
+    span = min(scene.duration * 0.7, 0.3 * len(words))
+    times = [0.06 + span * i / len(words) for i in range(len(words))]
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    space = ctx.text_extents(" ").x_advance
+    lines, cur, cur_w = [], [], 0.0
+    for i, w in enumerate(words):
+        ww = ctx.text_extents(w).x_advance
+        if cur and cur_w + space + ww > 940:
+            lines.append((cur, cur_w))
+            cur, cur_w = [], 0.0
+        cur_w += (space if cur else 0) + ww
+        cur.append((i, w, ww))
+    lines.append((cur, cur_w))
+    lh = size * 1.28
+    y = y0 - (len(lines) - 1) * lh / 2
+    current = max([i for i, wt in enumerate(times) if t >= wt], default=-1)
+    for line, lw in lines:
+        x = W / 2 - lw / 2
+        for i, w, ww in line:
+            if t >= times[i]:
+                s = 0.55 + 0.45 * ease_out_back((t - times[i]) / 0.22)
+                ctx.save()
+                ctx.translate(x + ww / 2, y)
+                ctx.scale(s, s)
+                if i == current:
+                    fill_rr(ctx, -ww / 2 - 14, -size * 0.64, ww + 28, size * 1.24, 20, (0, 0, 0, 0.25))
+                    fill_rr(ctx, -ww / 2 - 14, -size * 0.68, ww + 28, size * 1.24, 20, YELLOW)
+                    text(ctx, w, 0, -size * 0.04, size, col=INK, anchor="center")
+                else:
+                    text(ctx, w, 0, 4, size, col=(0, 0, 0, 0.35), anchor="center")
+                    text(ctx, w, 0, 0, size, col=(1, 1, 1), anchor="center", outline=(0.05, 0.05, 0.1), ow=10)
+                ctx.restore()
+            x += ww + space
+        y += lh
+
+
+def make_grain():
+    rng = np.random.default_rng(3)
+    n = 512
+    g = np.clip(128 + rng.normal(0, 38, (n, n)), 0, 255).astype(np.uint8)
+    bgra = np.dstack([g, g, g, np.full((n, n), 255, np.uint8)])
+    data = bytearray(bgra.tobytes())
+    surf = cairo.ImageSurface.create_for_data(data, cairo.FORMAT_ARGB32, n, n, n * 4)
+    return surf, data
+
+
+def overlays(ctx, frame, total_t, total, grain):
+    # viñeta
+    ctx.rectangle(0, 0, W, H)
+    ctx.set_source(radial(W / 2, H * 0.45, 1150, [(0, (0, 0, 0, 0)), (0.6, (0, 0, 0, 0)), (1, (0, 0, 0, 0.5))]))
+    ctx.fill()
+    # degradado inferior para que se lean los subtítulos
+    ctx.rectangle(0, 1250, W, H - 1250)
+    ctx.set_source(linear(0, 1250, 0, H, [(0, (0, 0, 0, 0)), (0.5, (0, 0, 0, 0.45)), (1, (0, 0, 0, 0.6))]))
+    ctx.fill()
+    # grano animado
+    rnd = random.Random(frame)
+    pat = cairo.SurfacePattern(grain)
+    pat.set_extend(cairo.EXTEND_REPEAT)
+    pat.set_matrix(cairo.Matrix(x0=rnd.randint(0, 511), y0=rnd.randint(0, 511)))
+    ctx.save()
+    ctx.set_operator(cairo.OPERATOR_SOFT_LIGHT)
+    ctx.set_source(pat)
+    ctx.paint_with_alpha(0.28)
+    ctx.restore()
+    # barra de progreso
+    fill_rr(ctx, 90, 120, W - 180, 10, 5, (1, 1, 1, 0.22))
+    fill_rr(ctx, 90, 120, max(10, (W - 180) * total_t / total), 10, 5, YELLOW)
+
+
+# ---------- sonido ----------
+
+def synth_audio(fname, scenes, total, sr=44100, ambient=True):
+    n = int((total + 1) * sr)
+    out = np.zeros(n)
+    rng = np.random.default_rng(1)
+
+    def add(at, sig):
+        s = int(at * sr)
+        if s >= n:
+            return
+        e = min(n, s + len(sig))
+        out[s:e] += sig[: e - s]
+
+    def env_exp(L, k):
+        return np.exp(-np.arange(L) / sr * k)
+
+    def pop():
+        L = int(0.09 * sr)
+        tt = np.arange(L) / sr
+        f = 900 * np.exp(-tt * 25) + 300
+        return 0.18 * np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-tt * 45)
+
+    def whoosh():
+        L = int(0.4 * sr)
+        noise = np.convolve(rng.normal(0, 1, L), np.ones(40) / 40, mode="same")
+        return 0.55 * noise * np.sin(np.linspace(0, np.pi, L)) ** 2
+
+    def tone(f, L, k, amp):
+        tt = np.arange(L) / sr
+        return amp * (np.sin(2 * np.pi * f * tt) + 0.3 * np.sin(4 * np.pi * f * tt)) * env_exp(L, k)
+
+    def chime():  # el "ding-dong" de cabina
+        L = int(1.6 * sr)
+        sig = tone(1046.5, L, 2.6, 0.16)
+        sig[int(0.42 * sr):] += tone(830.6, L - int(0.42 * sr), 2.6, 0.16)
+        return sig
+
+    def thunk():  # golpe grave de corte de luz
+        L = int(0.5 * sr)
+        tt = np.arange(L) / sr
+        return 0.5 * np.sin(2 * np.pi * (55 + 40 * np.exp(-tt * 20)) * tt) * env_exp(L, 9)
+
+    kinds = {"pop": pop, "whoosh": whoosh, "chime": chime, "thunk": thunk}
+    start = 0.0
+    for i, sc in enumerate(scenes):
+        if i:
+            add(max(0, start - 0.15), whoosh())
+        for at, kind in sc.sfx:
+            add(start + at, kinds[kind]())
+        start += sc.duration
+
+    if ambient:  # zumbido de cabina: ruido marrón filtrado
+        brown = np.cumsum(rng.normal(0, 1, n))
+        brown -= np.convolve(brown, np.ones(4000) / 4000, mode="same")
+        brown = np.convolve(brown, np.ones(60) / 60, mode="same")
+        brown /= np.max(np.abs(brown)) + 1e-9
+        fade = np.clip(np.minimum(np.arange(n) / sr / 1.0, (total - np.arange(n) / sr) / 1.0), 0, 1)
+        out += 0.10 * brown * fade
+
+    out = out / max(1.0, np.max(np.abs(out)) / 0.9)
+    with wave.open(fname, "wb") as wf:
+        wf.setnchannels(1)
+        wf.setsampwidth(2)
+        wf.setframerate(sr)
+        wf.writeframes((out * 32767).astype(np.int16).tobytes())
+
+
+# ---------- render ----------
+
+def draw_scene(ctx, scene, t):
+    ctx.save()
+    scene.draw(ctx, t)
+    ctx.restore()
+
+
+def frame_surface(scenes, i, t, start, total, frame, grain):
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    draw_scene(ctx, scenes[i], t)
+    if i > 0 and t < TRANSITION:  # fundido desde la escena anterior
+        prev = scenes[i - 1]
+        ctx.push_group()
+        draw_scene(ctx, prev, prev.duration + t)
+        ctx.pop_group_to_source()
+        ctx.paint_with_alpha(1 - ease_in_out(t / TRANSITION))
+    overlays(ctx, frame, start + t, total, grain)
+    caption(ctx, scenes[i], t)
+    return surf
+
+
+def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5)):
+    grain, _keep = make_grain()
+    total = sum(s.duration for s in scenes)
+    audio = out_mp4.replace(".mp4", "_sfx.wav")
+    synth_audio(audio, scenes, total)
+    proc = subprocess.Popen([
+        "ffmpeg", "-y", "-loglevel", "error",
+        "-f", "rawvideo", "-pix_fmt", "bgra", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
+        "-i", audio,
+        "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-maxrate", "8M", "-bufsize", "16M", "-pix_fmt", "yuv420p",
+        "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", out_mp4,
+    ], stdin=subprocess.PIPE)
+    frame, start = 0, 0.0
+    for i, sc in enumerate(scenes):
+        for k in range(int(round(sc.duration * FPS))):
+            t = k / FPS
+            surf = frame_surface(scenes, i, t, start, total, frame, grain)
+            proc.stdin.write(bytes(surf.get_data()))
+            if cover_png and (i, k) == (cover_at[0], int(cover_at[1] * FPS)):
+                surf.write_to_png(cover_png)
+            frame += 1
+        start += sc.duration
+    proc.stdin.close()
+    proc.wait()
+    import os
+    os.remove(audio)
+    return total
+
+
+def preview(scenes, png, at=0.8, cols=5):
+    """Hoja de contactos: un fotograma de cada escena."""
+    grain, _keep = make_grain()
+    total = sum(s.duration for s in scenes)
+    thumbs = []
+    start = 0.0
+    for i, sc in enumerate(scenes):
+        t = sc.duration * at
+        thumbs.append(frame_surface(scenes, i, t, start, total, i, grain))
+        start += sc.duration
+    tw, th = 360, 640
+    rows = math.ceil(len(thumbs) / cols)
+    sheet = cairo.ImageSurface(cairo.FORMAT_ARGB32, cols * tw, rows * th)
+    ctx = cairo.Context(sheet)
+    for k, s in enumerate(thumbs):
+        ctx.save()
+        ctx.translate((k % cols) * tw, (k // cols) * th)
+        ctx.scale(tw / W, th / H)
+        ctx.set_source_surface(s, 0, 0)
+        ctx.paint()
+        ctx.restore()
+    sheet.write_to_png(png)
