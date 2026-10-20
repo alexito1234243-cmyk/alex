@@ -9,6 +9,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
   con `--preview <png>` saca una hoja con un fotograma por escena en 3 segundos.
 - `tierra_agujero.py`: ¿qué pasaría si saltaras por un agujero que atraviesa la Tierra? → `video/out/tierra-agujero/`.
 
+- `movil_carga.py`: ¿por qué el móvil carga lento desde el 80 %? Formato de la cuenta de referencia (mito desmentido, corte técnico con etiquetas, animaciones sincronizadas con palabras) → `video/out/movil-carga/`.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 
 Requisitos: `ffmpeg`, `pip install pycairo numpy`.
