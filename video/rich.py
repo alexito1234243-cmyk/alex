@@ -482,7 +482,8 @@ def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None):
         "-f", "rawvideo", "-pix_fmt", "bgra", "-s", f"{W}x{H}", "-r", str(FPS), "-i", "-",
         "-i", audio,
         "-c:v", "libx264", "-preset", "medium", "-crf", "21", "-maxrate", "8M", "-bufsize", "16M", "-pix_fmt", "yuv420p",
-        "-c:a", "aac", "-b:a", "160k", "-shortest", "-movflags", "+faststart", out_mp4,
+        "-af", "loudnorm=I=-14:TP=-1.5:LRA=11",  # volumen estándar de Reels/TikTok
+        "-c:a", "aac", "-b:a", "160k", "-ar", "44100", "-shortest", "-movflags", "+faststart", out_mp4,
     ], stdin=subprocess.PIPE)
     frame, start = 0, 0.0
     for i, sc in enumerate(scenes):
