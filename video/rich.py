@@ -149,6 +149,83 @@ def text(ctx, s, x, y, size, col=(1, 1, 1), weight=cairo.FONT_WEIGHT_BOLD, ancho
     ctx.fill()
 
 
+# ---------- piezas comunes ----------
+
+def blurred(ctx, draw_fn, factor=6):
+    """Dibuja a baja resolución y escala: desenfoque barato para fondos."""
+    small = cairo.ImageSurface(cairo.FORMAT_ARGB32, W // factor, H // factor)
+    c2 = cairo.Context(small)
+    c2.scale(1 / factor, 1 / factor)
+    draw_fn(c2)
+    ctx.save()
+    ctx.scale(factor, factor)
+    ctx.set_source_surface(small, 0, 0)
+    ctx.get_source().set_filter(cairo.FILTER_BILINEAR)
+    ctx.paint()
+    ctx.restore()
+
+
+def badge(ctx, x, y, p, ok=True, r=62):
+    s = ease_out_back(p)
+    if s <= 0:
+        return
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(s, s)
+    col = (0.18, 0.75, 0.42) if ok else (0.95, 0.20, 0.22)
+    glow(ctx, 0, 0, r * 2.2, col, 0.5, add=True)
+    disc(ctx, 0, 0, r, radial(-r * 0.3, -r * 0.3, r * 1.3, [(0, mul(col, 1.3)), (1, col)]))
+    if ok:
+        stroke(ctx, [(-r * 0.42, 0), (-r * 0.1, r * 0.32), (r * 0.45, -r * 0.32)], (1, 1, 1), 15)
+    else:
+        stroke(ctx, [(-r * 0.32, -r * 0.32), (r * 0.32, r * 0.32)], (1, 1, 1), 15)
+        stroke(ctx, [(r * 0.32, -r * 0.32), (-r * 0.32, r * 0.32)], (1, 1, 1), 15)
+    ctx.restore()
+
+
+def label(ctx, s, x, y, size=40):
+    ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    w = ctx.text_extents(s).x_advance
+    fill_rr(ctx, x, y - size * 0.75, w + 44, size * 1.5, size * 0.75, (0, 0, 0, 0.55))
+    text(ctx, s, x + 22, y, size, anchor="left")
+
+
+def cta_button(ctx, t, cx=540, cy=900):
+    """Botón de SEGUIR que aparece, se pulsa y deja una onda."""
+    press = 1 - 0.08 * math.sin(math.pi * prog(t, 1.3, 0.25))
+    p = ease_out_back(prog(t, 0.05, 0.45)) * press
+    if p > 0:
+        ctx.save()
+        ctx.translate(cx, cy)
+        ctx.scale(p, p)
+        glow(ctx, 0, 0, 480, (1.0, 0.3, 0.35), 0.45, add=True)
+        fill_rr(ctx, -290, -86, 580, 172, 86, linear(0, -86, 0, 86, [(0, (1.0, 0.42, 0.42)), (1, (0.82, 0.12, 0.24))]))
+        fill_rr(ctx, -290, -86, 580, 172, 86, linear(0, -86, 0, -10, [(0, (1, 1, 1, 0.28)), (1, (1, 1, 1, 0))]))
+        text(ctx, "SEGUIR", 0, 0, 86)
+        ctx.restore()
+    rp = prog(t, 1.3, 0.8)
+    if 0 < rp < 1:
+        ctx.arc(cx + 160, cy + 60, 40 + 140 * rp, 0, 2 * math.pi)
+        source(ctx, (1, 1, 1, 1 - rp))
+        ctx.set_line_width(8)
+        ctx.stroke()
+    hp = prog(t, 0.5, 0.6)
+    if hp > 0:
+        hx, hy = cx + 160 + 120 * (1 - ease_in_out(hp)), cy + 60 + 160 * (1 - ease_in_out(hp))
+        cursor = [(0, 0), (0, 150), (38, 112), (70, 178), (98, 166), (66, 100), (118, 100)]
+        ctx.save()
+        ctx.translate(hx, hy)
+        path(ctx, cursor)
+        source(ctx, (1, 1, 1))
+        ctx.fill_preserve()
+        source(ctx, (0.05, 0.05, 0.1))
+        ctx.set_line_width(8)
+        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
+        ctx.stroke()
+        ctx.restore()
+
+
 # ---------- escenas ----------
 
 @dataclass
@@ -279,7 +356,25 @@ def synth_audio(fname, scenes, total, sr=44100, ambient=True):
         tt = np.arange(L) / sr
         return 0.5 * np.sin(2 * np.pi * (55 + 40 * np.exp(-tt * 20)) * tt) * env_exp(L, 9)
 
-    kinds = {"pop": pop, "whoosh": whoosh, "chime": chime, "thunk": thunk}
+    def riser():  # viento que crece: caída que acelera
+        L = int(3.0 * sr)
+        tt = np.arange(L) / sr
+        noise = rng.normal(0, 1, L)
+        lo = np.convolve(noise, np.ones(60) / 60, mode="same")
+        hi = noise - np.convolve(noise, np.ones(8) / 8, mode="same")
+        k = tt / tt[-1]
+        return (0.5 * lo + 0.12 * hi * k) * k ** 1.5 * 0.8
+
+    def tick():
+        L = int(0.03 * sr)
+        return 0.25 * rng.normal(0, 1, L) * env_exp(L, 180)
+
+    def boom():
+        L = int(1.2 * sr)
+        tt = np.arange(L) / sr
+        return 0.6 * np.sin(2 * np.pi * (38 + 30 * np.exp(-tt * 6)) * tt) * env_exp(L, 3.5)
+
+    kinds = {"pop": pop, "whoosh": whoosh, "chime": chime, "thunk": thunk, "riser": riser, "tick": tick, "boom": boom}
     start = 0.0
     for i, sc in enumerate(scenes):
         if i:

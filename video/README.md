@@ -7,6 +7,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 - `rich.py`: motor v2 para escenas a pantalla completa (degradados, luces, grano, fundidos, ambiente sonoro).
 - `avion_luces.py`: vídeo elaborado con el motor v2. `python3 video/avion_luces.py` → `video/out/avion-luces/`;
   con `--preview <png>` saca una hoja con un fotograma por escena en 3 segundos.
+- `tierra_agujero.py`: ¿qué pasaría si saltaras por un agujero que atraviesa la Tierra? → `video/out/tierra-agujero/`.
 
 Requisitos: `ffmpeg`, `pip install pycairo numpy`.
 

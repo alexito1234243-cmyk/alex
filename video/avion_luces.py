@@ -11,8 +11,8 @@ import sys
 import cairo
 
 from engine import H, W, clamp, ease_in_out, ease_out_back, prog
-from rich import (Scene, bezier, disc, fill_rr, glow, linear, mix, mul, path, poly, preview, radial,
-                  render, rgba, rr, soft_ellipse, source, stroke, text)
+from rich import (Scene, badge, bezier, blurred, cta_button, disc, fill_rr, glow, label, linear, mix, mul, path,
+                  poly, preview, radial, render, rgba, rr, soft_ellipse, source, stroke, text)
 
 _rng = random.Random(42)
 STARS = [(_rng.uniform(0, W), _rng.uniform(0, 1150), _rng.uniform(1.0, 3.0), _rng.uniform(0, 6.3)) for _ in range(170)]
@@ -296,20 +296,6 @@ def cabin(ctx, t, light=1.0, mood=(1.0, 0.93, 0.82), cz=0.0, floor_lights=0.0, e
             z += 0.3
 
 
-def blurred(ctx, draw_fn, factor=6):
-    """Dibuja a baja resolución y escala: desenfoque barato para fondos."""
-    small = cairo.ImageSurface(cairo.FORMAT_ARGB32, W // factor, H // factor)
-    c2 = cairo.Context(small)
-    c2.scale(1 / factor, 1 / factor)
-    draw_fn(c2)
-    ctx.save()
-    ctx.scale(factor, factor)
-    ctx.set_source_surface(small, 0, 0)
-    ctx.get_source().set_filter(cairo.FILTER_BILINEAR)
-    ctx.paint()
-    ctx.restore()
-
-
 # ---------- letrero de salida ----------
 
 def exit_sign(ctx, x, y, s=1.0, on=1.0):
@@ -520,24 +506,6 @@ def window(ctx, t, shade=0.0, fire=0.0, light=0.6, cx=540, cy=720, s=1.0):
 
 # ---------- iconos ----------
 
-def badge(ctx, x, y, p, ok=True, r=62):
-    s = ease_out_back(p)
-    if s <= 0:
-        return
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    col = (0.18, 0.75, 0.42) if ok else RED
-    glow(ctx, 0, 0, r * 2.2, col, 0.5, add=True)
-    disc(ctx, 0, 0, r, radial(-r * 0.3, -r * 0.3, r * 1.3, [(0, mul(col, 1.3)), (1, col)]))
-    if ok:
-        stroke(ctx, [(-r * 0.42, 0), (-r * 0.1, r * 0.32), (r * 0.45, -r * 0.32)], (1, 1, 1), 15)
-    else:
-        stroke(ctx, [(-r * 0.32, -r * 0.32), (r * 0.32, r * 0.32)], (1, 1, 1), 15)
-        stroke(ctx, [(r * 0.32, -r * 0.32), (-r * 0.32, r * 0.32)], (1, 1, 1), 15)
-    ctx.restore()
-
-
 def warning(ctx, x, y, p, t):
     s = ease_out_back(p) * (1 + 0.06 * math.sin(t * 9))
     if s <= 0:
@@ -558,13 +526,6 @@ def warning(ctx, x, y, p, t):
     text(ctx, "!", 0, 18, 130, col=(1, 1, 1))
     ctx.restore()
 
-
-def label(ctx, s, x, y, size=40):
-    ctx.select_font_face("Inter", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(size)
-    w = ctx.text_extents(s).x_advance
-    fill_rr(ctx, x, y - size * 0.75, w + 44, size * 1.5, size * 0.75, (0, 0, 0, 0.55))
-    text(ctx, s, x + 22, y, size, anchor="left")
 
 
 # ---------- escenas ----------
@@ -718,38 +679,7 @@ def s_cta(ctx, t):
     sky(ctx, t)
     ground(ctx, t, drift=t * 30)
     plane(ctx, t, 120 + 260 * t, 430 - 40 * t, s=0.5, rot=-0.08, beam=False)
-    press = 1 - 0.08 * math.sin(math.pi * prog(t, 1.3, 0.25))
-    p = ease_out_back(prog(t, 0.05, 0.45)) * press
-    if p > 0:
-        ctx.save()
-        ctx.translate(540, 900)
-        ctx.scale(p, p)
-        glow(ctx, 0, 0, 480, (1.0, 0.3, 0.35), 0.45, add=True)
-        fill_rr(ctx, -290, -86, 580, 172, 86, linear(0, -86, 0, 86, [(0, (1.0, 0.42, 0.42)), (1, (0.82, 0.12, 0.24))]))
-        fill_rr(ctx, -290, -86, 580, 172, 86, linear(0, -86, 0, -10, [(0, (1, 1, 1, 0.28)), (1, (1, 1, 1, 0))]))
-        text(ctx, "SEGUIR", 0, 0, 86)
-        ctx.restore()
-    rp = prog(t, 1.3, 0.8)
-    if 0 < rp < 1:
-        ctx.arc(700, 960, 40 + 140 * rp, 0, 2 * math.pi)
-        source(ctx, (1, 1, 1, 1 - rp))
-        ctx.set_line_width(8)
-        ctx.stroke()
-    hp = prog(t, 0.5, 0.6)
-    if hp > 0:
-        hx, hy = 700 + 120 * (1 - ease_in_out(hp)), 960 + 160 * (1 - ease_in_out(hp))
-        cursor = [(0, 0), (0, 150), (38, 112), (70, 178), (98, 166), (66, 100), (118, 100)]
-        ctx.save()
-        ctx.translate(hx, hy)
-        path(ctx, cursor)
-        source(ctx, (1, 1, 1))
-        ctx.fill_preserve()
-        source(ctx, (0.05, 0.05, 0.1))
-        ctx.set_line_width(8)
-        ctx.set_line_join(cairo.LINE_JOIN_ROUND)
-        ctx.stroke()
-        ctx.restore()
-
+    cta_button(ctx, t, 540, 900)
 
 SCENES = [
     Scene("¿Por qué apagan las luces del avión al aterrizar de noche?", s_hook, sfx=[(0.7, "chime"), (2.2, "thunk")]),
