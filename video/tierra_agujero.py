@@ -580,15 +580,15 @@ SCENES = [
     Scene("Síguenos para más curiosidades como esta.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
 
-POST = """¿Qué pasaría si saltaras por un agujero que atraviesa la Tierra? 🌍🕳️
+POST = """¿Y si saltaras por un agujero que atraviesa la Tierra? 🌍
 
-Sin aire que te frene, caerías cada vez más rápido y cruzarías el centro a más de 28.000 km/h. Allí no pesarías nada. Después irías frenando hasta asomar justo al otro lado… unos 38 minutos después. Y si nadie te agarra, volverías a caer una y otra vez.
+Caerías unos 38 minutos, cruzarías el centro a más de 28.000 km/h y asomarías justo por el otro lado… si no hubiera aire en el túnel. Y si nadie te agarra, volverías a caer una y otra vez.
 
-El problema: el agujero más profundo que hemos hecho, el pozo de Kola, solo llega a 12 km de los 6.371 que hay hasta el centro. Y allí abajo hace tanto calor como en la superficie del Sol.
+El problema: el agujero más profundo que existe, el pozo de Kola, solo llega a 12 km. Hasta el centro hay 6.371.
 
-Síguenos para más curiosidades 👀
+¿Te tirarías? 👇
 
-#curiosidades #ciencia #sabiasque #fisica #datoscuriosos
+#curiosidades #ciencia #fisica #espacio #sabiasque
 """
 
 if __name__ == "__main__":
