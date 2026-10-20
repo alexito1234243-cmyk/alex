@@ -9,32 +9,51 @@ from engine import (BLUE, GREEN, INK, PAPER, PINK, RED, WHITE, Canvas, Scene,
                     ease_out_back, ellipse, prog, render, rrect)
 
 DARK_BLUE = (0.13, 0.33, 0.70)
+LIGHT_BLUE = (0.45, 0.62, 0.95)
 GLASS = (0.78, 0.86, 0.95)
+FACET = (0.62, 0.72, 0.86)
+BRASS = (0.80, 0.68, 0.38)
+CAP_HOLE = (0, -226)   # agujero de la tapa (coordenadas de la tapa)
+PEN_HOLE = (10, -150)  # agujerito del cuerpo (coordenadas del boli)
 
 
-# ---------- piezas reutilizables ----------
+# ---------- piezas reutilizables (proporciones del BIC Cristal) ----------
 
 def cap(c: Canvas, t, start=0.0, key=10):
-    c.shape(rrect(-70, -250, 140, 420, 46), prog(t, start, 0.7), fill=BLUE, key=key)
-    c.shape(rrect(62, -220, 40, 300, 20), prog(t, start + 0.35, 0.5), fill=DARK_BLUE, key=key + 1)
-    c.line([(-66, 120), (66, 120)], prog(t, start + 0.6, 0.3), key=key + 2)
+    """Tapa vertical: estrecha, punta redondeada con agujero arriba y clip a la izquierda."""
+    body = [(-32, 230), (-32, -140), (-26, -200), (-14, -226), (0, -232), (14, -226),
+            (26, -200), (32, -140), (32, 230), (-32, 230)]
+    clip = [(-18, -208), (-50, -182), (-50, 95), (-56, 112), (-44, 124), (-36, 108),
+            (-36, -160), (-22, -185), (-18, -208)]
+    c.shape(body, prog(t, start, 0.7), fill=BLUE, width=7, key=key)
+    c.line([(14, -170), (14, 180)], prog(t, start + 0.4, 0.4), color=LIGHT_BLUE, width=8, key=key + 1)
+    c.line([(-29, 196), (29, 196)], prog(t, start + 0.5, 0.3), width=5, key=key + 2)
+    c.shape(clip, prog(t, start + 0.35, 0.5), fill=DARK_BLUE, width=7, key=key + 3)
     hp = ease_out_back(prog(t, start + 0.8, 0.3))
     if hp > 0:
-        c.dot(0, -195, 32 * hp, PAPER)
-        c.dot(0, -195, 21 * hp, INK)
+        c.dot(*CAP_HOLE, 12 * hp, PAPER)
+        c.dot(*CAP_HOLE, 8 * hp, INK)
 
 
-def pen(c: Canvas, t, start=0.0, ink_end=250, key=40):
-    c.push(scale=0.86)
-    c.line([(-330, 0), (ink_end, 0)], prog(t, start + 0.3, 0.5), color=BLUE, width=18, key=key)
-    c.shape(rrect(-330, -50, 600, 100, 16), prog(t, start, 0.8), fill=GLASS, fill_alpha=0.55, key=key + 1)
-    c.shape([(-330, -38), (-440, -6), (-440, 6), (-330, 38)], prog(t, start + 0.4, 0.4), fill=WHITE, key=key + 2)
-    c.shape(rrect(262, -42, 56, 84, 12), prog(t, start + 0.5, 0.4), fill=BLUE, key=key + 3)
+def pen(c: Canvas, t, start=0.0, ink_end=370, key=40, capped=False):
+    """Boli vertical con la punta arriba: cuerpo hexagonal transparente, tinta, punta y tapón."""
+    p = prog(t, start, 0.8)
+    c.line([(0, -372), (0, ink_end)], prog(t, start + 0.3, 0.5), color=BLUE, width=12, key=key)
+    barrel = [(-26, -300), (-10, -372), (10, -372), (26, -300), (26, 370), (-26, 370), (-26, -300)]
+    c.shape(barrel, p, fill=GLASS, fill_alpha=0.5, width=7, key=key + 1)
+    c.line([(-9, -300), (-9, 368)], prog(t, start + 0.4, 0.5), color=FACET, width=3, key=key + 2)
+    c.line([(9, -300), (9, 368)], prog(t, start + 0.4, 0.5), color=FACET, width=3, key=key + 3)
+    c.shape([(-8, -372), (-3, -396), (3, -396), (8, -372), (-8, -372)], prog(t, start + 0.5, 0.3),
+            fill=BRASS, width=5, key=key + 4)
+    c.shape(rrect(-22, 364, 44, 48, 8), prog(t, start + 0.5, 0.4), fill=BLUE, width=7, key=key + 5)
     hp = ease_out_back(prog(t, start + 0.8, 0.3))
     if hp > 0:
-        c.dot(-446, 0, 9 * hp, INK)
-        c.dot(40, -26, 10 * hp, INK)
-    c.pop()
+        c.dot(-0.5, -399, 4 * hp, INK)
+        c.dot(*PEN_HOLE, 7 * hp, INK)
+    if capped:
+        c.push(0, -330)
+        cap(c, t, start + 0.5, key=key + 10)
+        c.pop()
 
 
 def throat(c: Canvas, t, start=0.0, key=70):
@@ -60,13 +79,15 @@ def check(c: Canvas, x, y, p, r=56):
 # ---------- escenas ----------
 
 def s_hook(c, t):
-    cap(c, t, 0.1)
-    p = prog(t, 1.3, 0.5)
-    pulse = 1 + 0.08 * math.sin(t * 8) * (p >= 1)
-    c.push(0, -195, scale=pulse)
-    c.shape(ellipse(0, 0, 68, 68), p, fill=None, stroke=RED, width=10, key=2)
+    c.push(0, 70, scale=0.78, rot=0.18)
+    pen(c, t, 0.05, capped=True)
+    p = prog(t, 1.6, 0.4)
+    pulse = 1 + 0.1 * math.sin(t * 8) * (p >= 1)
+    c.push(CAP_HOLE[0], CAP_HOLE[1] - 330, scale=pulse)
+    c.shape(ellipse(0, 0, 56, 56), p, fill=None, stroke=RED, width=11, key=2)
     c.pop()
-    for i, (x, y, rot, at) in enumerate([(-270, -230, -0.25, 1.8), (260, -40, 0.2, 2.1)]):
+    c.pop()
+    for i, (x, y, rot, at) in enumerate([(-260, -300, -0.25, 1.9), (250, -120, 0.2, 2.2)]):
         s = ease_out_back(prog(t, at, 0.3))
         if s > 0:
             c.push(x, y, scale=s, rot=rot)
@@ -74,10 +95,14 @@ def s_hook(c, t):
             c.pop()
 
 
+
 def s_not_plastic(c, t):
+    c.push(scale=1.25)
     cap(c, t, -2)
-    c.line([(-230, -300), (230, 220)], prog(t, 0.4, 0.3), color=RED, width=22, key=5)
-    c.line([(230, -300), (-230, 220)], prog(t, 0.7, 0.3), color=RED, width=22, key=6)
+    c.pop()
+    c.line([(-230, -300), (230, 280)], prog(t, 0.4, 0.3), color=RED, width=22, key=5)
+    c.line([(230, -300), (-230, 280)], prog(t, 0.7, 0.3), color=RED, width=22, key=6)
+
 
 
 def s_bite(c, t):
@@ -93,7 +118,7 @@ def s_bite(c, t):
     # la tapa entra en la boca
     move = prog(t, 0.9, 1.6)
     x = 620 - 560 * (1 - (1 - move) ** 3)
-    s = 0.6 * (1 - 0.6 * gulp)
+    s = 0.75 * (1 - 0.6 * gulp)
     c.push(x, 0, scale=s, rot=-math.pi / 2)
     cap(c, t, -2, key=12)
     c.pop()
@@ -102,7 +127,7 @@ def s_bite(c, t):
 def s_stuck(c, t):
     throat(c, t, 0)
     wob = 0.08 * math.sin(t * 14) * (t > 1.2)
-    c.push(0, 0, scale=0.55, rot=wob)
+    c.push(0, 0, scale=0.75, rot=wob)
     cap(c, t, 0.4)
     c.pop()
     s = ease_out_back(prog(t, 1.6, 0.3))
@@ -115,7 +140,7 @@ def s_stuck(c, t):
 
 def s_air(c, t):
     throat(c, t, -2)
-    c.push(0, 0, scale=0.55)
+    c.push(0, 0, scale=0.75)
     cap(c, t, -2)
     c.pop()
     # corrientes de aire que suben atravesando el agujero
@@ -124,10 +149,10 @@ def s_air(c, t):
         x = (-14, 0, 14)[i % 3]
         c.line([(x, y + 50), (x, y)], 1, color=WHITE, width=12, key=100 + i)
     p = prog(t, 0.6, 0.4)
-    c.line([(310, -120), (160, -108)], p, color=BLUE, width=9, key=110)
-    c.line([(185, -140), (160, -108), (192, -82)], prog(t, 0.9, 0.2), color=BLUE, width=9, key=111)
+    c.line([(330, -120), (170, -120)], p, color=BLUE, width=9, key=110)
+    c.line([(205, -150), (170, -120), (205, -90)], prog(t, 0.9, 0.2), color=BLUE, width=9, key=111)
     if p > 0:
-        c.text("AIRE", 390, -120, 64, color=BLUE, alpha=p)
+        c.text("AIRE", 260, -190, 64, color=BLUE, alpha=p)
 
 
 def s_iso(c, t):
@@ -143,36 +168,46 @@ def s_iso(c, t):
 
 
 def s_barrel(c, t):
+    c.push(-40, 40, scale=0.9)
     pen(c, t, 0.1)
+    hx, hy = PEN_HOLE
     p = prog(t, 1.4, 0.4)
-    c.shape(ellipse(40, -26, 48, 48), p, fill=None, stroke=RED, width=9, key=130)
+    c.shape(ellipse(hx, hy, 32, 32), p, fill=None, stroke=RED, width=8, key=130)
     lp = prog(t, 1.9, 0.5)
-    c.line([(40, -80), (40, -150)], lp, color=RED, width=7, key=131)
-    c.shape(ellipse(40, -290, 130, 130), lp, fill=WHITE, fill_alpha=0.8, key=132)
-    c.line([(130, -380), (210, -460)], lp, width=24, key=133)
+    c.line([(hx + 34, hy), (hx + 150, hy)], lp, color=RED, width=7, key=131)
+    c.shape(ellipse(hx + 280, hy, 130, 130), lp, fill=WHITE, fill_alpha=0.85, key=132)
+    c.line([(hx + 372, hy + 92), (hx + 440, hy + 180)], lp, width=24, key=133)
     if lp >= 1:
-        c.dot(40, -290, 46, INK)
+        c.dot(hx + 280, hy, 44, INK)
+    c.pop()
+
 
 
 def s_ink(c, t):
-    ink_end = 250 - 150 * prog(t, 0.6, 3.4)
-    pen(c, t, -2, ink_end=ink_end)
-    c.line([(40, -290), (40, -100)], prog(t, 0.3, 0.4), color=BLUE, width=10, key=140)
-    c.line([(5, -140), (40, -100), (75, -140)], prog(t, 0.65, 0.2), color=BLUE, width=10, key=141)
-    c.text("AIRE", 40, -340, 60, color=BLUE, alpha=prog(t, 0.3, 0.4))
+    # boli con la punta hacia abajo, escribiendo
+    ox, oy, s = 0, -70, 0.85
+    c.push(ox, oy, scale=s, rot=math.pi)
+    pen(c, t, -2, ink_end=370 - 260 * prog(t, 0.6, 2.8))
+    c.pop()
+    hx, hy = ox - PEN_HOLE[0] * s, oy - PEN_HOLE[1] * s
+    c.line([(hx - 260, hy), (hx - 40, hy)], prog(t, 0.3, 0.4), color=BLUE, width=10, key=140)
+    c.line([(hx - 80, hy - 35), (hx - 40, hy), (hx - 80, hy + 35)], prog(t, 0.65, 0.2), color=BLUE, width=10, key=141)
+    c.text("AIRE", hx - 170, hy - 70, 60, color=BLUE, alpha=prog(t, 0.3, 0.4))
     # la tinta sale por la punta y escribe
-    scrib = [(-470 + k * 14, 170 + 26 * math.sin(k * 0.9)) for k in range(60)]
-    c.line(scrib, prog(t, 0.9, 3.0), color=BLUE, width=10, key=142)
+    tip_y = oy + 396 * s
+    scrib = [(-420 + k * 14, tip_y + 40 - 26 * abs(math.sin(k * 0.45))) for k in range(31)]
+    c.line(scrib, prog(t, 0.9, 2.6), color=BLUE, width=9, key=142)
+
 
 
 def s_two(c, t):
     for i, x in enumerate((-210, 210)):
         p = prog(t, 0.1 + i * 0.25, 0.5)
         c.shape(ellipse(x, 0, 170, 170), p, fill=WHITE, key=150 + i)
-    c.push(-210, 10, scale=0.42 * ease_out_back(prog(t, 0.3, 0.4)))
+    c.push(-210, 10, scale=0.55 * ease_out_back(prog(t, 0.3, 0.4)))
     cap(c, t, -2, key=160)
     c.pop()
-    c.push(210, 0, scale=0.3 * ease_out_back(prog(t, 0.55, 0.4)), rot=-0.7)
+    c.push(210, 0, scale=0.34 * ease_out_back(prog(t, 0.55, 0.4)), rot=0.6)
     pen(c, t, -2, key=170)
     c.pop()
     check(c, -90, -130, prog(t, 1.1, 0.35))
@@ -193,7 +228,7 @@ def s_cta(c, t):
 
 
 SCENES = [
-    Scene("¿Por qué la tapa de tu boli BIC tiene un agujero?", s_hook, pops=[0.95, 1.4, 1.8, 2.1]),
+    Scene("¿Por qué la tapa de tu boli BIC tiene un agujero?", s_hook, pops=[1.4, 1.6, 1.9, 2.2]),
     Scene("No es para ahorrar plástico.", s_not_plastic, pops=[0.45, 0.75]),
     Scene("Mucha gente las muerde… y a veces se las traga.", s_bite, pops=[0.5, 3.0]),
     Scene("Si una tapa se queda atascada en la garganta…", s_stuck, pops=[1.6]),
