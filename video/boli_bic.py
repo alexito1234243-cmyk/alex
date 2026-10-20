@@ -50,6 +50,12 @@ def pen(c: Canvas, t, start=0.0, ink_end=370, key=40, capped=False):
     if hp > 0:
         c.dot(-0.5, -399, 4 * hp, INK)
         c.dot(*PEN_HOLE, 7 * hp, INK)
+    # logo impreso a lo largo del cuerpo
+    lp = prog(t, start + 0.9, 0.3)
+    if lp > 0:
+        c.push(0, 170, rot=-math.pi / 2)
+        c.text("BIC", 0, 0, 42, color=INK, alpha=lp)
+        c.pop()
     if capped:
         c.push(0, -330)
         cap(c, t, start + 0.5, key=key + 10)
