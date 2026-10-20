@@ -26,7 +26,7 @@ def trim(x, sr, thr=0.01):
     idx = np.where(np.abs(x) > thr)[0]
     if not len(idx):
         return x
-    return x[max(0, idx[0] - int(0.03 * sr)): idx[-1] + int(0.08 * sr)]
+    return x[max(0, idx[0] - int(0.03 * sr)): idx[-1] + int(0.18 * sr)]
 
 
 def resample(x, sr_in, sr_out=SR):

@@ -390,12 +390,12 @@ def s_few(ctx, t):
 
 def s_damage(ctx, t):
     tech_bg(ctx, t)
-    pl = ease_in_out(prog(t, w(s_damage, "amontonan") - 0.1, 1.4))
+    pl = ease_in_out(prog(t, w(s_damage, "atasco") - 0.1, 1.4))
     ht = ease_in_out(prog(t, w(s_damage, "calienta") - 0.1, 0.8))
     battery(ctx, t, 0.83, current=1.0, parking=1, queue=1 - 0.3 * pl, plating=pl, heat=ht,
-            labels={"plating": appear(t, w(s_damage, "amontonan") + 0.4, 0.5)})
+            labels={"plating": appear(t, w(s_damage, "atasco") + 0.4, 0.5)})
     hud(ctx, "TEMPERATURA", f"{int(28 + 17 * ht)}", "°C", 610, 170, col=mix(WHITE, RED, ht))
-    hud(ctx, "SALUD", f"{int(100 - 9 * appear(t, w(s_damage, 'estropea'), 0.8))}", "%", 90, 170, col=mix(WHITE, RED, appear(t, w(s_damage, "estropea"), 0.8)))
+    hud(ctx, "SALUD", f"{int(100 - 9 * appear(t, w(s_damage, 'daña'), 0.8))}", "%", 90, 170, col=mix(WHITE, RED, appear(t, w(s_damage, "daña"), 0.8)))
 
 
 def s_graph(ctx, t):
@@ -436,38 +436,7 @@ def s_graph(ctx, t):
         ctx.restore()
         text(ctx, "80 %", xm, oy - gh * 0.8 - 50, 52, col=(1.0, 0.80, 0.24, a), outline=(0, 0, 0, a), ow=8)
     tag(ctx, "BAJA POCO A POCO", ox + gw * 0.7, oy - gh * current(0.7) / 100, ox + gw * 0.62, oy - gh * 0.25,
-        appear(t, w(s_graph, "poco"), 0.5), col=CYAN, size=30)
-
-
-def clock(ctx, x, y, r, t, col):
-    disc(ctx, x, y, r, (0.08, 0.09, 0.13))
-    ctx.arc(x, y, r, 0, 2 * math.pi)
-    source(ctx, col)
-    ctx.set_line_width(6)
-    ctx.stroke()
-    a = t * 3
-    stroke(ctx, [(x, y), (x + r * 0.7 * math.sin(a), y - r * 0.7 * math.cos(a))], col, 6)
-    stroke(ctx, [(x, y), (x + r * 0.45 * math.sin(a / 12), y - r * 0.45 * math.cos(a / 12))], col, 6)
-
-
-def s_last(ctx, t):
-    tech_bg(ctx, t)
-    for k, (lab, length, col, at) in enumerate([("0 → 80 %", 640, GREEN, 0.1), ("80 → 100 %", 600, ORANGE, w(s_last, "último"))]):
-        y = 560 + 330 * k
-        p = ease_in_out(prog(t, at, 1.0))
-        text(ctx, lab, 110, y - 80, 52, anchor="left")
-        fill_rr(ctx, 110, y - 34, 700, 68, 34, (1, 1, 1, 0.08))
-        if p > 0:
-            fill_rr(ctx, 110, y - 34, max(68, length * p), 68, 34, linear(110, 0, 110 + length, 0, [(0, mul(col, 0.7)), (1, col)]))
-            glow(ctx, 110 + length * p, y, 50, col, 0.6, add=True)
-            clock(ctx, 900, y, 56, t * (1 if k == 0 else 0.3), col)
-    p = ease_out_back(appear(t, w(s_last, "tanto"), 0.4))
-    if p > 0:
-        ctx.save()
-        ctx.translate(540, 1170)
-        ctx.scale(p, p)
-        text(ctx, "≈ MISMO TIEMPO", 0, 0, 70, col=YELLOW, outline=(0, 0, 0), ow=9)
-        ctx.restore()
+        appear(t, w(s_graph, "corriente"), 0.5), col=CYAN, size=30)
 
 
 def settings_screen(on, health):
@@ -488,7 +457,7 @@ def settings_screen(on, health):
 
 def s_tip(ctx, t):
     tech_bg(ctx, t)
-    on = ease_in_out(appear(t, w(s_tip, "limitas"), 0.4))
+    on = ease_in_out(appear(t, w(s_tip, "limita"), 0.4))
     health = 0.82 + 0.18 * ease_in_out(appear(t, w(s_tip, "años"), 0.9))
     phone(ctx, 540, 810, 1.1, settings_screen(on, health), t, cable=False)
     p = ease_out_back(appear(t, 0.0, 0.4))
@@ -513,27 +482,24 @@ SCENES = [
           voice="¿Por qué el móvil carga volando hasta el ochenta por ciento, y luego va a paso de tortuga?",
           sfx=[(0.1, "riser"), (1.9, "thunk")]),
     Scene("No, tu cargador no está roto. Lo hace a propósito.", s_not_broken, sfx=[("@roto", "thunk"), ("@propósito", "pop")]),
-    Scene("Tu batería está llena de iones de litio que van de un lado a otro.", s_inside, sfx=[("@iones", "pop")]),
-    Scene("Cargarla es meterlos entre capas de grafito, como coches en un parking.", s_parking, sfx=[("@parking", "pop")]),
-    Scene("Con el parking vacío, entran de golpe y sin problema.", s_fast, sfx=[(0.2, "riser")]),
-    Scene("Pero cuando quedan pocas plazas, meterlos a lo bruto es peligroso.", s_few, sfx=[("@peligroso", "thunk")]),
-    Scene("Se amontonan en la entrada, la batería se calienta y se estropea.", s_damage, sfx=[("@calienta", "boom")]),
-    Scene("Por eso, a partir del 80%, el móvil baja la corriente poco a poco.", s_graph,
-          voice="Por eso, a partir del ochenta por ciento, el móvil baja la corriente poco a poco."),
-    Scene("Completar el último 20% puede tardar casi tanto como todo lo anterior.", s_last,
-          voice="Completar el último veinte por ciento puede tardar casi tanto como todo lo anterior.",
-          sfx=[("@tanto", "pop")]),
-    Scene("Por cierto: si limitas la carga al 80%, tu batería durará más años.", s_tip,
-          voice="Por cierto, si limitas la carga al ochenta por ciento, tu batería durará más años.",
-          sfx=[(0.05, "pop"), ("@limitas", "pop")]),
-    Scene("Síguenos para más curiosidades como esta.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
+    Scene("Tu batería está llena de iones de litio.", s_inside, sfx=[("@iones", "pop")]),
+    Scene("Cargarla es aparcarlos entre capas de grafito, como coches en un parking.", s_parking, sfx=[("@parking", "pop")]),
+    Scene("Con el parking vacío, entran de golpe.", s_fast, sfx=[(0.2, "riser")]),
+    Scene("Pero con pocas plazas, meterlos a lo bruto es peligroso.", s_few, sfx=[("@peligroso", "thunk")]),
+    Scene("Se forma un atasco, la batería se calienta y se daña.", s_damage, sfx=[("@calienta", "boom")]),
+    Scene("Por eso, desde el 80%, el móvil baja la corriente.", s_graph,
+          voice="Por eso, desde el ochenta por ciento, el móvil baja la corriente."),
+    Scene("Por cierto: limita la carga al 80% y tu batería durará más años.", s_tip,
+          voice="Por cierto, limita la carga al ochenta por ciento y tu batería durará más años.",
+          sfx=[(0.05, "pop"), ("@limita", "pop")]),
+    Scene("Síguenos para más curiosidades.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
 
 POST = """¿Por qué el móvil carga volando hasta el 80 % y luego va a paso de tortuga? 🔋
 
-No, tu cargador no está roto. Dentro de la batería, cargar es meter iones de litio entre capas de grafito, como coches en un parking. Cuando quedan pocas plazas, meterlos a lo bruto hace que se amontonen, la batería se caliente y se estropee. Por eso el móvil baja la corriente a partir del 80 %.
+No, tu cargador no está roto. Cargar la batería es aparcar iones de litio entre capas de grafito, como coches en un parking. Con pocas plazas libres, meterlos a lo bruto hace que se amontonen, la batería se caliente y se estropee. Por eso, desde el 80 %, el móvil baja la corriente y el último tramo va mucho más lento.
 
-Truco: si limitas la carga al 80 %, tu batería durará más años.
+Truco: limita la carga al 80 % y tu batería durará más años.
 
 ¿Tú lo cargas al 100 %? 👇
 
@@ -548,7 +514,7 @@ if __name__ == "__main__":
     if "--sin-voz" not in sys.argv:
         from voz import Narrator
         voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "santa"
-        narrator = Narrator(voice)
+        narrator = Narrator(voice, speed=1.14)
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")
         dest = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else os.path.join(out, "preview.png")
