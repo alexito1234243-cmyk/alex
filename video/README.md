@@ -17,8 +17,8 @@ Locución local con Kokoro (sherpa-onnx), sin cuentas ni pagos por uso:
 
 ```sh
 sh video/get_voices.sh            # baja el modelo (~350 MB) a video/models/ (no se sube a git)
-python3 video/tierra_agujero.py   # con voz "dora" por defecto
-python3 video/tierra_agujero.py --voz alex   # voces: dora, alex, santa
+python3 video/tierra_agujero.py   # con voz "santa" por defecto
+python3 video/tierra_agujero.py --voz dora   # voces: santa, dora, alex
 python3 video/tierra_agujero.py --sin-voz
 ```
 

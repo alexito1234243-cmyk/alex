@@ -5,7 +5,7 @@ Datos: con la densidad real de la Tierra, la caída de polo a polo dura unos 38 
 28.000 km/h (28.460 km/h con densidad uniforme, algo más con la real). El pozo
 de Kola llegó a 12.262 m. Núcleo interno: unos 5.200 °C; superficie del Sol: unos 5.500 °C.
 
-Uso: python3 video/tierra_agujero.py [--voz dora|alex|santa] [--sin-voz]  ->  vídeo en video/out/tierra-agujero/
+Uso: python3 video/tierra_agujero.py [--voz santa|dora|alex] [--sin-voz]  ->  vídeo en video/out/tierra-agujero/
      python3 video/tierra_agujero.py --preview [png]                     ->  hoja de contactos
 """
 import math
@@ -568,12 +568,12 @@ SCENES = [
     Scene("Si no hubiera aire, caerías cada vez más rápido…", s_fall, sfx=[(0.6, "pop"), (0.95, "pop"), (1.3, "pop"), (1.65, "pop"), (1.0, "riser")]),
     Scene("…y cruzarías el centro a más de 28.000 km/h.", s_center,
           voice="y cruzarías el centro a más de veintiocho mil kilómetros por hora.", sfx=[(2.2, "boom")]),
-    Scene("Justo en el centro no pesarías nada.", s_weightless),
+    Scene("En el centro exacto no pesarías nada.", s_weightless),
     Scene("Después irías frenando hasta asomar al otro lado.", s_other_side, sfx=[(2.6, "pop")]),
     Scene("¿Cuánto tardarías? Unos 38 minutos.", s_time, duration=3.2,
           voice="¿Cuánto tardarías? Unos treinta y ocho minutos.",
           sfx=[(0.3 + k * 0.08, "tick") for k in range(20)] + [(1.95, "pop")]),
-    Scene("Y si nadie te agarra, volverías a caer… una y otra vez.", s_forever, sfx=[(1.2, "pop")]),
+    Scene("Si nadie te agarra, volverías a caer… una y otra vez.", s_forever, sfx=[(1.2, "pop")]),
     Scene("Pero el agujero más hondo que existe solo llega a 12 km.", s_kola,
           voice="Pero el agujero más hondo que existe solo llega a doce kilómetros.", sfx=[(1.5, "pop"), (2.2, "pop")]),
     Scene("Y abajo hace tanto calor como en la superficie del Sol.", s_hot, sfx=[(0.0, "pop"), (1.0, "pop")]),
@@ -598,7 +598,7 @@ if __name__ == "__main__":
     narrator = None
     if "--sin-voz" not in sys.argv:
         from voz import Narrator
-        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "dora"
+        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "santa"
         narrator = Narrator(voice)
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")

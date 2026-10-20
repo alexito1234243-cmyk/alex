@@ -1,6 +1,7 @@
 """Locución sin conexión con Kokoro (sherpa-onnx). Los modelos se bajan con video/get_voices.sh.
 
-Voces en español: dora (mujer), alex y santa (hombres).
+Voces en español: santa y alex (hombres), dora (mujer). Santa se traga las vocales sueltas
+al empezar frase ("Y si" suena "Sin", "Así" suena "Si"): mejor no empezar frases con ellas.
 Comprobar pronunciación:  python3 video/voz.py --check "texto a decir"  (necesita get_voices.sh --check)
 """
 import os
@@ -36,7 +37,7 @@ def resample(x, sr_in, sr_out=SR):
 
 
 class Narrator:
-    def __init__(self, voice="dora", speed=1.08, threads=4):
+    def __init__(self, voice="santa", speed=1.08, threads=4):
         import sherpa_onnx
         d = os.path.join(MODELS, "kokoro-multi-lang-v1_0")
         if not os.path.isdir(d):

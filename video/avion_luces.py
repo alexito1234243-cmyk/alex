@@ -1,6 +1,6 @@
 """Vídeo: ¿Por qué apagan las luces del avión al aterrizar de noche? (versión elaborada)
 
-Uso: python3 video/avion_luces.py [--voz dora|alex|santa] [--sin-voz]  ->  vídeo en video/out/avion-luces/
+Uso: python3 video/avion_luces.py [--voz santa|dora|alex] [--sin-voz]  ->  vídeo en video/out/avion-luces/
      python3 video/avion_luces.py --preview [png]                     ->  hoja de contactos con un fotograma por escena
 """
 import math
@@ -694,7 +694,7 @@ SCENES = [
     Scene("…tus ojos tardan varios minutos en adaptarse.", s_adapt),
     Scene("Con la luz ya bajada, llegan preparados.", s_ready, sfx=[(0.8, "pop"), (1.2, "pop")]),
     Scene("Por eso también te piden subir la persiana.", s_shade, sfx=[(0.5, "whoosh")]),
-    Scene("Así se ve si hay algún peligro fuera.", s_danger, sfx=[(0.9, "pop")]),
+    Scene("Para ver si hay algún peligro fuera.", s_danger, sfx=[(0.9, "pop")]),
     Scene("Y las luces del suelo te guían hasta la salida.", s_floor),
     Scene("Síguenos para más curiosidades como esta.", s_cta, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
@@ -717,7 +717,7 @@ if __name__ == "__main__":
     narrator = None
     if "--sin-voz" not in sys.argv:
         from voz import Narrator
-        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "dora"
+        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "santa"
         narrator = Narrator(voice)
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")
