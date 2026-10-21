@@ -10,6 +10,7 @@ import subprocess
 import cairo
 
 import avion_luces as av
+import giro_movil as gm
 import movil_carga as mc
 import tierra_agujero as ti
 from engine import FONT, H, W
@@ -97,6 +98,19 @@ def cover_movil(grain):
     save_jpg(surf, os.path.join(HERE, "out", "movil-carga", "portada.jpg"))
 
 
+def cover_giro(grain):
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    t = 2.0
+    gm.tech_bg(ctx, t)
+    gm.mems(ctx, 540, 1130, 1.1, 0.0, 0, 16, t)
+    gm.tag(ctx, "MASA", 540, 1130, 620, 1500, 1.0, col=gm.CYAN, size=40)
+    gm.tag(ctx, "MUELLES", 280, 1130, 330, 1500, 1.0, col=gm.CYAN, size=40)
+    finish(ctx, grain)
+    title(ctx, [("¿CÓMO SABE TU MÓVIL", False), ("QUE LO HAS", False), ("GIRADO?", True)], 270)
+    save_jpg(surf, os.path.join(HERE, "out", "giro-movil", "portada.jpg"))
+
+
 def avatar(grain, size=1080):
     """Interrogación amarilla cuyo punto es la Tierra: se lee incluso a 110 px."""
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
@@ -139,5 +153,6 @@ if __name__ == "__main__":
     cover_tierra(grain)
     cover_avion(grain)
     cover_movil(grain)
+    cover_giro(grain)
     avatar(grain)
     print("OK")

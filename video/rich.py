@@ -236,6 +236,7 @@ class Scene:
     duration: float = 0.0
     sfx: list = field(default_factory=list)  # [(segundo, "pop" | "chime" | "thunk" | "whoosh" | ...)]
     voice: str = ""  # lo que dice la voz si no coincide con el subtítulo (números, siglas)
+    key: str = ""  # palabra clave resaltada (estilo TOP)
     audio: object = field(default=None, repr=False)
 
     def __post_init__(self):
@@ -292,7 +293,47 @@ def sfx_time(scene, at):
     return word_time(scene, at[1:]) if isinstance(at, str) else at
 
 
-def caption(ctx, scene, t, y0=1560, size=82):
+# Subtítulos abajo con la palabra que suena resaltada (vídeos antiguos), o arriba, fuera de la
+# zona que tapa la interfaz de Reels, en páginas de 2 líneas y con una palabra clave resaltada.
+BOTTOM = {"caption_y": 1560, "max_lines": 0, "highlight": "current", "shade": "bottom"}
+TOP = {"caption_y": 330, "max_lines": 2, "highlight": "key", "shade": "top"}
+
+
+def _norm(w):
+    return w.strip("¿?¡!.,:;…\"«»").lower()
+
+
+def _layout(items, ctx, space, max_w=940):
+    lines, cur, cur_w = [], [], 0.0
+    for i, w in items:
+        ww = ctx.text_extents(w).x_advance
+        if cur and cur_w + space + ww > max_w:
+            lines.append((cur, cur_w))
+            cur, cur_w = [], 0.0
+        cur_w += (space if cur else 0) + ww
+        cur.append((i, w, ww))
+    lines.append((cur, cur_w))
+    return lines
+
+
+def _pages(words, ctx, space, n_pages):
+    """Reparte la frase en n páginas de longitud parecida, cortando mejor tras una coma o un punto."""
+    widths = [ctx.text_extents(w).x_advance + space for w in words]
+    total, cuts, acc = sum(widths), [], 0.0
+    cum = []
+    for wd in widths:
+        acc += wd
+        cum.append(acc)
+    for k in range(1, n_pages):
+        target = total * k / n_pages
+        best = min(range(len(words) - 1), key=lambda i: abs(cum[i] - target) - (0.12 * total if words[i][-1] in ",.;:?!…" else 0))
+        cuts.append(best + 1)
+    bounds = [0] + sorted(set(cuts)) + [len(words)]
+    return [_layout([(i, words[i]) for i in range(a, b)], ctx, space) for a, b in zip(bounds, bounds[1:]) if b > a]
+
+
+def caption(ctx, scene, t, style=BOTTOM, size=82):
+    y0 = style["caption_y"]
     words, times = word_times(scene)
     ctx.select_font_face(FONT, cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(size)
@@ -307,8 +348,16 @@ def caption(ctx, scene, t, y0=1560, size=82):
         cur.append((i, w, ww))
     lines.append((cur, cur_w))
     lh = size * 1.28
-    y = y0 - (len(lines) - 1) * lh / 2
     current = max([i for i, wt in enumerate(times) if t >= wt], default=-1)
+    if style["max_lines"] and len(lines) > style["max_lines"]:
+        pages = _pages(words, ctx, space, math.ceil(len(lines) / style["max_lines"]))
+        lines = next((p for p in pages if any(i == current for line, _ in p for i, _, _ in line)), pages[0])
+    if style["highlight"] == "key":
+        key = _norm(scene.key)
+        marked = next((i for i, w in enumerate(words) if key and _norm(w) == key), -1)
+    else:
+        marked = current
+    y = y0 - (len(lines) - 1) * lh / 2
     for line, lw in lines:
         x = W / 2 - lw / 2
         for i, w, ww in line:
@@ -317,7 +366,7 @@ def caption(ctx, scene, t, y0=1560, size=82):
                 ctx.save()
                 ctx.translate(x + ww / 2, y)
                 ctx.scale(s, s)
-                if i == current:
+                if i == marked:
                     fill_rr(ctx, -ww / 2 - 14, -size * 0.64, ww + 28, size * 1.24, 20, (0, 0, 0, 0.25))
                     fill_rr(ctx, -ww / 2 - 14, -size * 0.68, ww + 28, size * 1.24, 20, YELLOW)
                     text(ctx, w, 0, -size * 0.04, size, col=INK, anchor="center")
@@ -339,14 +388,18 @@ def make_grain():
     return surf, data
 
 
-def overlays(ctx, frame, total_t, total, grain):
+def overlays(ctx, frame, total_t, total, grain, shade="bottom"):
     # viñeta
     ctx.rectangle(0, 0, W, H)
     ctx.set_source(radial(W / 2, H * 0.45, 1150, [(0, (0, 0, 0, 0)), (0.6, (0, 0, 0, 0)), (1, (0, 0, 0, 0.5))]))
     ctx.fill()
-    # degradado inferior para que se lean los subtítulos
-    ctx.rectangle(0, 1250, W, H - 1250)
-    ctx.set_source(linear(0, 1250, 0, H, [(0, (0, 0, 0, 0)), (0.5, (0, 0, 0, 0.45)), (1, (0, 0, 0, 0.6))]))
+    # degradado detrás de los subtítulos para que se lean
+    if shade == "top":
+        ctx.rectangle(0, 0, W, 640)
+        ctx.set_source(linear(0, 0, 0, 640, [(0, (0, 0, 0, 0.6)), (0.6, (0, 0, 0, 0.4)), (1, (0, 0, 0, 0))]))
+    else:
+        ctx.rectangle(0, 1250, W, H - 1250)
+        ctx.set_source(linear(0, 1250, 0, H, [(0, (0, 0, 0, 0)), (0.5, (0, 0, 0, 0.45)), (1, (0, 0, 0, 0.6))]))
     ctx.fill()
     # grano animado
     rnd = random.Random(frame)
@@ -469,7 +522,7 @@ def draw_scene(ctx, scene, t):
     ctx.restore()
 
 
-def frame_surface(scenes, i, t, start, total, frame, grain):
+def frame_surface(scenes, i, t, start, total, frame, grain, style=BOTTOM):
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
     draw_scene(ctx, scenes[i], t)
@@ -479,12 +532,12 @@ def frame_surface(scenes, i, t, start, total, frame, grain):
         draw_scene(ctx, prev, prev.duration + t)
         ctx.pop_group_to_source()
         ctx.paint_with_alpha(1 - ease_in_out(t / TRANSITION))
-    overlays(ctx, frame, start + t, total, grain)
-    caption(ctx, scenes[i], t)
+    overlays(ctx, frame, start + t, total, grain, style["shade"])
+    caption(ctx, scenes[i], t, style)
     return surf
 
 
-def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None):
+def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None, style=BOTTOM):
     if narrator:
         narrate(scenes, narrator)
     grain, _keep = make_grain()
@@ -503,7 +556,7 @@ def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None):
     for i, sc in enumerate(scenes):
         for k in range(int(round(sc.duration * FPS))):
             t = k / FPS
-            surf = frame_surface(scenes, i, t, start, total, frame, grain)
+            surf = frame_surface(scenes, i, t, start, total, frame, grain, style)
             proc.stdin.write(bytes(surf.get_data()))
             if cover_png and (i, k) == (cover_at[0], int(cover_at[1] * FPS)):
                 surf.write_to_png(cover_png)
@@ -516,7 +569,7 @@ def render(scenes, out_mp4, cover_png=None, cover_at=(0, 1.5), narrator=None):
     return total
 
 
-def preview(scenes, png, at=0.8, cols=5, narrator=None):
+def preview(scenes, png, at=0.8, cols=5, narrator=None, style=BOTTOM):
     """Hoja de contactos: un fotograma de cada escena."""
     if narrator:
         narrate(scenes, narrator)
@@ -526,7 +579,7 @@ def preview(scenes, png, at=0.8, cols=5, narrator=None):
     start = 0.0
     for i, sc in enumerate(scenes):
         t = sc.duration * at
-        thumbs.append(frame_surface(scenes, i, t, start, total, i, grain))
+        thumbs.append(frame_surface(scenes, i, t, start, total, i, grain, style))
         start += sc.duration
     tw, th = 360, 640
     rows = math.ceil(len(thumbs) / cols)
