@@ -419,31 +419,97 @@ def overlays(ctx, frame, total_t, total, grain, shade="bottom"):
 
 # ---------- sonido ----------
 
+def _bandpass_sweep(x, fc, damp, sr):
+    """Filtro paso banda de estado variable cuya frecuencia central cambia muestra a muestra."""
+    y = np.empty_like(x)
+    low = band = 0.0
+    for k in range(len(x)):
+        f = 2 * math.sin(math.pi * min(fc[k], sr / 6) / sr)
+        high = x[k] - low - damp * band
+        band += f * high
+        low += f * band
+        y[k] = band
+    return y
+
+
+def _fft_convolve(a, b):
+    m = len(a) + len(b) - 1
+    size = 1 << (m - 1).bit_length()
+    return np.fft.irfft(np.fft.rfft(a, size) * np.fft.rfft(b, size), size)[:m]
+
+
+def _pan(sig, p):
+    """Paneo de potencia constante: p = -1 izquierda, 0 centro, 1 derecha (escalar o por muestra)."""
+    ang = (np.clip(p, -1, 1) + 1) * np.pi / 4
+    return sig * np.cos(ang), sig * np.sin(ang)
+
+
 def synth_audio(fname, scenes, total, sr=44100, ambient=True):
+    """Pista estéreo: voz en el centro, transiciones que cruzan de lado a lado, efectos y ambiente."""
     n = int((total + 1) * sr)
-    out = np.zeros(n)
+    left, right = np.zeros(n), np.zeros(n)
+    sfx_l, sfx_r = np.zeros(n), np.zeros(n)
     rng = np.random.default_rng(1)
 
-    def add(at, sig):
+    def add(at, sig, pan=0.0, bus="sfx"):
         s = int(at * sr)
-        if s >= n:
+        if s >= n or s + len(sig) <= 0:
             return
+        if s < 0:
+            sig, s = sig[-s:], 0
         e = min(n, s + len(sig))
-        out[s:e] += sig[: e - s]
+        lch, rch = _pan(sig[: e - s], pan)
+        tl, tr = (sfx_l, sfx_r) if bus == "sfx" else (left, right)
+        tl[s:e] += lch
+        tr[s:e] += rch
+
+    def add_lr(at, lch, rch):
+        s = int(at * sr)
+        if s < 0:
+            lch, rch, s = lch[-s:], rch[-s:], 0
+        e = min(n, s + len(lch))
+        sfx_l[s:e] += lch[: e - s]
+        sfx_r[s:e] += rch[: e - s]
 
     def env_exp(L, k):
         return np.exp(-np.arange(L) / sr * k)
 
-    def pop():
-        L = int(0.09 * sr)
-        tt = np.arange(L) / sr
-        f = 900 * np.exp(-tt * 25) + 300
-        return 0.18 * np.sin(2 * np.pi * np.cumsum(f) / sr) * np.exp(-tt * 45)
+    ir_len = int(0.5 * sr)
+    ir_t = np.arange(ir_len) / sr
+    irs = [rng.normal(0, 1, ir_len) * np.exp(-ir_t / 0.11) for _ in range(2)]
+    irs = [ir / np.sqrt(np.sum(ir ** 2)) for ir in irs]
 
-    def whoosh():
-        L = int(0.4 * sr)
-        noise = np.convolve(rng.normal(0, 1, L), np.ones(40) / 40, mode="same")
-        return 0.55 * noise * np.sin(np.linspace(0, np.pi, L)) ** 2
+    def swoosh(dur=0.55, peak=0.62, direction=1, bright=1.0, gain=0.32):
+        """Whoosh: ruido con barrido de filtro, sube despacio hasta el corte y cae rápido, cruzando el estéreo.
+        Devuelve (izquierda, derecha, muestra del pico)."""
+        L = int(dur * sr)
+        u = np.arange(L) / L
+        noise = rng.normal(0, 1, L)
+        fc = 260 + 2700 * bright * np.exp(-((u - peak) / 0.24) ** 2)
+        body = _bandpass_sweep(noise, fc, 0.5, sr)
+        air = noise - np.convolve(noise, np.ones(5) / 5, mode="same")
+        env = np.where(u < peak, (u / peak) ** 2.4, np.exp(-(u - peak) * dur / 0.075))
+        sig = (body / (np.max(np.abs(body)) + 1e-9) + 0.12 * air * env) * env
+        lch, rch = _pan(sig, direction * (-0.9 + 1.7 * np.clip(u / peak, 0, 1.1)))
+        wet_l, wet_r = _fft_convolve(lch, irs[0])[:L + ir_len // 2], _fft_convolve(rch, irs[1])[:L + ir_len // 2]
+        out_l = np.concatenate([lch, np.zeros(ir_len // 2)]) + 0.28 * wet_l
+        out_r = np.concatenate([rch, np.zeros(ir_len // 2)]) + 0.28 * wet_r
+        k = gain / (np.max(np.abs(np.concatenate([out_l, out_r]))) + 1e-9)
+        return out_l * k, out_r * k, int(peak * L)
+
+    def sub_hit(gain=0.30):
+        L = int(0.35 * sr)
+        tt = np.arange(L) / sr
+        return gain * np.sin(2 * np.pi * (46 + 34 * np.exp(-tt * 30)) * tt) * env_exp(L, 13)
+
+    def pop():
+        L = int(0.07 * sr)
+        tt = np.arange(L) / sr
+        f0 = 1150 * rng.uniform(0.9, 1.1)
+        f = f0 * (0.62 + 0.38 * np.exp(-tt * 60))
+        ph = 2 * np.pi * np.cumsum(f) / sr
+        click = rng.normal(0, 1, L) * env_exp(L, 900) * 0.15
+        return 0.17 * (np.sin(ph) + 0.25 * np.sin(2 * ph)) * env_exp(L, 55) + click
 
     def tone(f, L, k, amp):
         tt = np.arange(L) / sr
@@ -478,41 +544,59 @@ def synth_audio(fname, scenes, total, sr=44100, ambient=True):
         tt = np.arange(L) / sr
         return 0.6 * np.sin(2 * np.pi * (38 + 30 * np.exp(-tt * 6)) * tt) * env_exp(L, 3.5)
 
-    kinds = {"pop": pop, "whoosh": whoosh, "chime": chime, "thunk": thunk, "riser": riser, "tick": tick, "boom": boom}
+    kinds = {"pop": pop, "chime": chime, "thunk": thunk, "riser": riser, "tick": tick, "boom": boom}
     voiced = any(sc.audio is not None for sc in scenes)
     fx = 0.55 if voiced else 1.0  # con voz, los efectos quedan por debajo
     voice = np.zeros(n)
     start = 0.0
     for i, sc in enumerate(scenes):
-        if i:
-            add(max(0, start - 0.15), fx * whoosh())
+        if i:  # transición: el pico del whoosh cae justo en el corte, con un golpe grave debajo
+            lch, rch, pk = swoosh(dur=rng.uniform(0.5, 0.62), direction=1 if i % 2 else -1,
+                                  bright=rng.uniform(0.8, 1.15), gain=0.34 * (0.8 if voiced else 1.0))
+            add_lr(start - pk / sr, lch, rch)
+            add(start, sub_hit(0.26 if voiced else 0.32))
         for at, kind in sc.sfx:
-            add(start + sfx_time(sc, at), fx * kinds[kind]())
+            t0 = start + sfx_time(sc, at)
+            if kind == "whoosh":
+                lch, rch, pk = swoosh(dur=0.45, peak=0.55, direction=-1 if i % 2 else 1, bright=1.2, gain=0.26 * fx / 0.55)
+                add_lr(t0 - pk / sr, lch, rch)
+            else:
+                add(t0, fx * kinds[kind](), pan=rng.uniform(-0.25, 0.25))
         if sc.audio is not None:
             s = int((start + VOICE_LEAD) * sr)
             e = min(n, s + len(sc.audio))
             voice[s:e] += sc.audio[: e - s]
         start += sc.duration
 
-    if ambient:  # zumbido de fondo: ruido marrón filtrado, que baja cuando habla la voz
-        brown = np.cumsum(rng.normal(0, 1, n))
-        brown -= np.convolve(brown, np.ones(4000) / 4000, mode="same")
-        brown = np.convolve(brown, np.ones(60) / 60, mode="same")
-        brown /= np.max(np.abs(brown)) + 1e-9
-        fade = np.clip(np.minimum(np.arange(n) / sr / 1.0, (total - np.arange(n) / sr) / 1.0), 0, 1)
-        duck = 1.0
-        if voiced:
-            env = np.convolve(np.abs(voice), np.ones(sr // 5) / (sr // 5), mode="same")
-            duck = 1 - 0.6 * np.clip(env / (env.max() + 1e-9) * 3, 0, 1)
-        out += (0.07 if voiced else 0.10) * brown * fade * duck
+    env = None
+    if voiced:  # efectos y ambiente se apartan cuando habla la voz
+        env = np.convolve(np.abs(voice), np.ones(sr // 10) / (sr // 10), mode="same")
+        env = np.clip(env / (env.max() + 1e-9) * 3, 0, 1)
+        sfx_l *= 1 - 0.35 * env
+        sfx_r *= 1 - 0.35 * env
 
-    out += voice
-    out = out / max(1.0, np.max(np.abs(out)) / 0.95)
+    if ambient:  # zumbido de fondo: ruido marrón filtrado, algo distinto en cada canal para dar amplitud
+        fade = np.clip(np.minimum(np.arange(n) / sr / 1.0, (total - np.arange(n) / sr) / 1.0), 0, 1)
+        duck = 1 - 0.6 * env if env is not None else 1.0
+        for ch in (left, right):
+            brown = np.cumsum(rng.normal(0, 1, n))
+            brown -= np.convolve(brown, np.ones(4000) / 4000, mode="same")
+            brown = np.convolve(brown, np.ones(60) / 60, mode="same")
+            brown /= np.max(np.abs(brown)) + 1e-9
+            ch += (0.07 if voiced else 0.10) * brown * fade * duck
+
+    left += sfx_l + voice
+    right += sfx_r + voice
+    peak = max(np.max(np.abs(left)), np.max(np.abs(right)))
+    left, right = left / max(1.0, peak / 0.95), right / max(1.0, peak / 0.95)
+    stereo = np.empty(2 * n, dtype=np.int16)
+    stereo[0::2] = (left * 32767).astype(np.int16)
+    stereo[1::2] = (right * 32767).astype(np.int16)
     with wave.open(fname, "wb") as wf:
-        wf.setnchannels(1)
+        wf.setnchannels(2)
         wf.setsampwidth(2)
         wf.setframerate(sr)
-        wf.writeframes((out * 32767).astype(np.int16).tobytes())
+        wf.writeframes(stereo.tobytes())
 
 
 # ---------- render ----------
