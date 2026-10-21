@@ -298,6 +298,10 @@ def sfx_time(scene, at):
 # zona que tapa la interfaz de Reels, en páginas de 2 líneas y con una palabra clave resaltada.
 BOTTOM = {"caption_y": 1560, "max_lines": 0, "highlight": "current", "shade": "bottom"}
 TOP = {"caption_y": 330, "max_lines": 2, "highlight": "key", "shade": "top"}
+# Como TOP pero con 1-3 palabras a la vista (lo ya dicho en gris fino), cámara que no para y
+# transiciones que atraviesan la imagen en vez de fundir.
+TOP_SHORT = {"caption_y": 360, "max_lines": 1, "max_words": 3, "highlight": "key", "shade": "top",
+             "dim_past": True, "camera": True, "transition": "zoom"}
 
 
 def _norm(w):
@@ -315,6 +319,22 @@ def _layout(items, ctx, space, max_w=940):
         cur.append((i, w, ww))
     lines.append((cur, cur_w))
     return lines
+
+
+def _word_pages(words, max_words):
+    """Grupos de hasta max_words palabras que cortan tras una coma o un punto."""
+    pages, cur = [], []
+    for i, w in enumerate(words):
+        cur.append(i)
+        if len(cur) >= max_words or w[-1] in ",.;:?!…":
+            pages.append(cur)
+            cur = []
+    if cur:
+        if len(cur) == 1 and pages and len(pages[-1]) < max_words + 1 and words[pages[-1][-1]][-1] not in ".?!…":
+            pages[-1].append(cur[0])
+        else:
+            pages.append(cur)
+    return pages
 
 
 def _pages(words, ctx, space, n_pages):
@@ -350,7 +370,10 @@ def caption(ctx, scene, t, style=BOTTOM, size=82):
     lines.append((cur, cur_w))
     lh = size * 1.28
     current = max([i for i, wt in enumerate(times) if t >= wt], default=-1)
-    if style["max_lines"] and len(lines) > style["max_lines"]:
+    if style.get("max_words"):
+        pages = [_layout([(i, words[i]) for i in rng_], ctx, space) for rng_ in _word_pages(words, style["max_words"])]
+        lines = next((p for p in pages if any(i == current for line, _ in p for i, _, _ in line)), pages[0])
+    elif style["max_lines"] and len(lines) > style["max_lines"]:
         pages = _pages(words, ctx, space, math.ceil(len(lines) / style["max_lines"]))
         lines = next((p for p in pages if any(i == current for line, _ in p for i, _, _ in line)), pages[0])
     if style["highlight"] == "key":
@@ -371,6 +394,9 @@ def caption(ctx, scene, t, style=BOTTOM, size=82):
                     fill_rr(ctx, -ww / 2 - 14, -size * 0.64, ww + 28, size * 1.24, 20, (0, 0, 0, 0.25))
                     fill_rr(ctx, -ww / 2 - 14, -size * 0.68, ww + 28, size * 1.24, 20, YELLOW)
                     text(ctx, w, 0, -size * 0.04, size, col=INK, anchor="center")
+                elif style.get("dim_past") and i != current:
+                    text(ctx, w, 0, 0, size, col=(1, 1, 1, 0.55), weight=cairo.FONT_WEIGHT_NORMAL, anchor="center",
+                         outline=(0.02, 0.02, 0.05, 0.5), ow=6)
                 else:
                     text(ctx, w, 0, 4, size, col=(0, 0, 0, 0.35), anchor="center")
                     text(ctx, w, 0, 0, size, col=(1, 1, 1), anchor="center", outline=(0.05, 0.05, 0.1), ow=10)
@@ -607,9 +633,33 @@ def draw_scene(ctx, scene, t):
     ctx.restore()
 
 
+def _draw_cam(ctx, scene, t, scale=1.0, alpha=1.0, camera=False, cx=540, cy=960):
+    """Dibuja la escena con un acercamiento continuo (cámara viva) y una escala/opacidad extra."""
+    if camera:
+        scale *= 1 + 0.09 * ease_in_out(t / scene.duration)
+    ctx.push_group()
+    ctx.translate(cx, cy)
+    ctx.scale(scale, scale)
+    ctx.translate(-cx, -cy)
+    draw_scene(ctx, scene, t)
+    ctx.pop_group_to_source()
+    ctx.paint_with_alpha(alpha)
+
+
 def frame_surface(scenes, i, t, start, total, frame, grain, style=BOTTOM):
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
+    if style.get("transition") == "zoom" or style.get("camera"):
+        ctx.set_source_rgb(0.02, 0.02, 0.03)
+        ctx.paint()
+        p = ease_in_out(t / TRANSITION) if (i > 0 and t < TRANSITION and style.get("transition") == "zoom") else 1.0
+        _draw_cam(ctx, scenes[i], t, scale=0.86 + 0.14 * p, alpha=p, camera=style.get("camera"))
+        if p < 1:  # la escena anterior sigue acercándose hasta atravesarla
+            prev = scenes[i - 1]
+            _draw_cam(ctx, prev, prev.duration + t, scale=1.09 + 0.6 * p, alpha=1 - p, camera=False)
+        overlays(ctx, frame, start + t, total, grain, style["shade"])
+        caption(ctx, scenes[i], t, style)
+        return surf
     draw_scene(ctx, scenes[i], t)
     if i > 0 and t < TRANSITION:  # fundido desde la escena anterior
         prev = scenes[i - 1]

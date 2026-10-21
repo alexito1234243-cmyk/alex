@@ -21,9 +21,9 @@ import math
 import os
 import sys
 
-from engine import clamp, ease_in_out, ease_out_back, prog
-from piezas import CYAN, GREEN, ORANGE, WHITE, appear, phone, tag, tech_bg
-from rich import (TOP, YELLOW, Scene, cta_button, disc, fill_rr, glow, linear, poly, preview, radial,
+from engine import H, W, clamp, ease_in_out, ease_out_back, prog
+from piezas import CYAN, GREEN, ORANGE, RED, WHITE, appear, mini_tag, phone, readout, spaced, tech_bg
+from rich import (TOP_SHORT, YELLOW, Scene, disc, fill_rr, glow, linear, mix, poly, preview, radial,
                   render, rgba, soft_ellipse, source, stroke, text, word_time)
 
 SILVER = (0.78, 0.81, 0.88)
@@ -226,8 +226,9 @@ def signal(ctx, t, x, y, wdt, amp_fn, p):
 def s_hook(ctx, t):
     tech_bg(ctx, t)
     ta = w(s_hook, "girado") - 0.1
-    rotating_phone(ctx, t, 540, 960, 1.0, ta)
-    turn_arrow(ctx, 540, 960, 500, prog(t, ta, 0.6))
+    rot = rotating_phone(ctx, t, 540, 1000, 1.1, ta)
+    turn_arrow(ctx, 540, 1000, 540, prog(t, ta, 0.6))
+    axes_readout(ctx, rot, 650, 470, appear(t, ta + 0.2, 0.4))
 
 
 def xray(c, t):
@@ -244,8 +245,8 @@ def xray(c, t):
 def s_piece(ctx, t):
     tech_bg(ctx, t)
     jig = 6 * math.sin(t * 9) * prog(t, w(s_piece, "mueve") - 0.1, 0.2)
-    phone(ctx, 540 + jig, 980, 1.0, xray, t, cable=False)
-    hx, hy = 540 + jig + 50, 980 - 140
+    phone(ctx, 540 + jig, 1000, 1.15, xray, t, cable=False)
+    hx, hy = 540 + jig + 1.15 * 50, 1000 - 1.15 * 140
     p = appear(t, w(s_piece, "pieza"), 0.4)
     if p > 0:
         pulse = 1 + 0.15 * math.sin(t * 7)
@@ -255,14 +256,14 @@ def s_piece(ctx, t):
         source(ctx, rgba(CYAN, clamp(p)))
         ctx.set_line_width(5)
         ctx.stroke()
-    tag(ctx, "ACELERÓMETRO", hx + 50, hy, 600, 560, appear(t, w(s_piece, "pieza") + 0.2, 0.5), col=CYAN, size=40)
+    mini_tag(ctx, "ACELERÓMETRO", hx + 50, hy, 600, 560, appear(t, w(s_piece, "pieza") + 0.2, 0.5), col=CYAN)
 
 
 def s_chip(ctx, t):
     tech_bg(ctx, t)
     # escala: 1 mm = 110 px
     chip_package(ctx, 300, 930, 220, t)
-    tag(ctx, "ACELERÓMETRO", 300, 820, 360, 560, appear(t, 0.1, 0.4), col=CYAN, size=40)
+    mini_tag(ctx, "ACELERÓMETRO", 300, 820, 360, 560, appear(t, 0.1, 0.4), col=CYAN)
     dimension(ctx, 190, 410, 1100, "2 mm", appear(t, w(s_chip, "chip"), 0.5), col=CYAN)
     lp = ease_out_back(appear(t, w(s_chip, "lenteja"), 0.45))
     if lp > 0:
@@ -272,22 +273,22 @@ def s_chip(ctx, t):
         lentil(ctx, 0, 0, 250)
         ctx.restore()
         dimension(ctx, 490, 990, 1230, "≈ 5 mm", appear(t, w(s_chip, "lenteja") + 0.3, 0.5), col=ORANGE)
-        tag(ctx, "LENTEJA", 840, 800, 880, 640, appear(t, w(s_chip, "lenteja") + 0.1, 0.45), col=ORANGE, size=38)
+        mini_tag(ctx, "LENTEJA", 840, 800, 880, 640, appear(t, w(s_chip, "lenteja") + 0.1, 0.45), col=ORANGE)
 
 
 def s_inside(ctx, t):
     tech_bg(ctx, t)
     lid = 1 - ease_in_out(prog(t, 0.0, 0.7))
-    mems(ctx, 540, 960, 1.15, 0.0, 0, 0, t, lid=lid)
-    tag(ctx, "MASA", 540, 960, 600, 520, appear(t, w(s_inside, "masa"), 0.45), col=CYAN, size=42)
-    tag(ctx, "MUELLES", 270, 960, 330, 1400, appear(t, w(s_inside, "muelles"), 0.45), col=CYAN, size=42)
+    mems(ctx, 540, 980, 1.3, 0.0, 0, 0, t, lid=lid)
+    mini_tag(ctx, "MASA", 540, 960, 600, 520, appear(t, w(s_inside, "masa"), 0.45), col=CYAN)
+    mini_tag(ctx, "MUELLES", 270, 960, 330, 1400, appear(t, w(s_inside, "muelles"), 0.45), col=CYAN)
 
 
 def s_gravity(ctx, t):
     tech_bg(ctx, t)
     g = ease_in_out(appear(t, w(s_gravity, "tira"), 0.5))
     bob = 3 * math.sin(t * 5) * g
-    mems(ctx, 540, 940, 1.15, 0.0, 0, 22 * g + bob, t)
+    mems(ctx, 540, 960, 1.3, 0.0, 0, 22 * g + bob, t)
     p = appear(t, w(s_gravity, "gravedad"), 0.4)
     if p > 0:
         a = clamp(p * 1.5)
@@ -304,7 +305,8 @@ def s_shift(ctx, t):
     rot = -math.pi / 3 * ease_in_out(prog(t, ta, 0.8))
     # la gravedad sigue apuntando al suelo: en coordenadas del chip, la masa cae hacia su nuevo "abajo"
     gx, gy = 60 * math.sin(-rot), 60 * math.cos(rot) * 0.4 + 14
-    mems(ctx, 540, 860, 0.85, rot, gx * 0.6, gy, t)
+    mems(ctx, 540, 900, 1.0, rot, gx * 0.6, gy, t)
+    axes_readout(ctx, -rot, 650, 470, appear(t, ta, 0.4))
     stroke(ctx, [(540, 1150), (540, 1260)], rgba(YELLOW, 0.8), 12)
     stroke(ctx, [(508, 1224), (540, 1262), (572, 1224)], rgba(YELLOW, 0.8), 12)
     p = appear(t, w(s_shift, "pelo"), 0.4)
@@ -320,9 +322,9 @@ def s_shift(ctx, t):
 def s_combs(ctx, t):
     tech_bg(ctx, t)
     combs(ctx, t, 6 * math.sin(t * 3), hair=appear(t, w(s_combs, "pelo"), 0.6))
-    tag(ctx, "PEINES DE SILICIO", 470, 700, 600, 470, appear(t, w(s_combs, "peines"), 0.45), col=CYAN, size=38)
+    mini_tag(ctx, "PEINES DE SILICIO", 470, 700, 600, 470, appear(t, w(s_combs, "peines"), 0.45), col=CYAN)
     dimension(ctx, 300, 340, 1460 - 40, "4 µm", appear(t, w(s_combs, "finos"), 0.4), col=CYAN)
-    tag(ctx, "PELO ≈ 70 µm", 900, 760, 700, 1440, appear(t, w(s_combs, "pelo") + 0.2, 0.5), col=ORANGE, size=36)
+    mini_tag(ctx, "PELO ≈ 70 µm", 900, 760, 700, 1440, appear(t, w(s_combs, "pelo") + 0.2, 0.5), col=ORANGE)
 
 
 def s_measure(ctx, t):
@@ -337,7 +339,7 @@ def s_measure(ctx, t):
         stroke(ctx, [(xm, 760), (xf, 760)], rgba(YELLOW, a), 5)
         for xx in (xm, xf):
             stroke(ctx, [(xx, 740), (xx, 780)], rgba(YELLOW, a), 5)
-        tag(ctx, "DISTANCIA", (xm + xf) / 2, 760, 700, 1450, p, col=YELLOW, size=38)
+        mini_tag(ctx, "DISTANCIA", (xm + xf) / 2, 760, 700, 1450, p, col=YELLOW)
     signal(ctx, t, 90, 440, 900, lambda tt: math.sin(tt * 2.6) * prog(tt, w(s_measure, "mueve") - 0.1, 0.3),
            appear(t, w(s_measure, "mide"), 0.4))
 
@@ -345,16 +347,17 @@ def s_measure(ctx, t):
 def s_floor(ctx, t):
     tech_bg(ctx, t)
     ta = w(s_floor, "gira") - 0.15
-    rotating_phone(ctx, t, 540, 880, 0.85, ta, direction=-1, from_landscape=True)
+    rot = rotating_phone(ctx, t, 540, 940, 1.0, ta, direction=-1, from_landscape=True)
+    axes_readout(ctx, rot, 650, 470, 1.0)
     p = appear(t, w(s_floor, "suelo"), 0.4)
     if p > 0:
         a = clamp(p * 1.5)
         stroke(ctx, [(140, 1380), (940, 1380)], rgba(WHITE, 0.5 * a), 6)
         for k in range(9):
             stroke(ctx, [(160 + 95 * k, 1384), (130 + 95 * k, 1420)], rgba(WHITE, 0.3 * a), 4)
-        stroke(ctx, [(900, 700), (900, 1340)], rgba(YELLOW, a), 14)
-        stroke(ctx, [(868, 1300), (900, 1342), (932, 1300)], rgba(YELLOW, a), 14)
-        text(ctx, "SUELO", 900, 640, 44, col=rgba(YELLOW, a), outline=(0, 0, 0, a), ow=7)
+        stroke(ctx, [(150, 800), (150, 1340)], rgba(YELLOW, a), 14)
+        stroke(ctx, [(118, 1300), (150, 1342), (182, 1300)], rgba(YELLOW, a), 14)
+        spaced(ctx, "SUELO", 150, 740, 36, col=rgba(YELLOW, a), anchor="center")
 
 
 def footprint(ctx, x, y, left, a):
@@ -391,10 +394,195 @@ def s_steps(ctx, t):
     text(ctx, f"PASOS  {1024 + steps:,}".replace(",", "."), 960, 490, 30, col=GREEN, anchor="right")
 
 
-def s_cta(ctx, t):
+def axes_readout(ctx, rot, x, y, a):
+    """Lo que mide el acelerómetro en cada eje (m/s²), según cómo esté girado el móvil."""
+    readout(ctx, x, y, [("X", -9.81 * math.sin(rot), (1.0, 0.45, 0.45)), ("Y", 9.81 * math.cos(rot), GREEN),
+                        ("Z", 0.0, CYAN)], a=a, title="ACELERÓMETRO", unit="m/s²")
+
+
+def s_axes(ctx, t):
     tech_bg(ctx, t)
-    rotating_phone(ctx, t, 540, 760, 0.6, 0.4)
-    cta_button(ctx, t, 540, 1250)
+    rot = -0.75 * math.sin(t * 1.4) * prog(t, 0.0, 0.5)
+    cx, cy, s = 400, 1050, 0.95
+    ctx.save()
+    ctx.translate(cx, cy)
+    ctx.rotate(rot)
+
+    def screen(c, tt):
+        photo(c)
+    phone(ctx, 0, 0, s, screen, t, cable=False)
+    p = appear(t, w(s_axes, "eje"), 0.5)
+    if p > 0:  # ejes del móvil
+        a = clamp(p * 1.5)
+        for (dx, dy, col, lab) in [(1, 0, (1.0, 0.45, 0.45), "X"), (0, -1, GREEN, "Y")]:
+            L = 300 * ease_in_out(p)
+            stroke(ctx, [(0, 0), (dx * L, dy * L)], rgba(col, a), 10)
+            spaced(ctx, lab, dx * (L + 34), dy * (L + 34), 40, col=rgba(col, a), anchor="center")
+        disc(ctx, 0, 0, 22, rgba(CYAN, a))
+        disc(ctx, 0, 0, 9, (0.02, 0.03, 0.08))
+        spaced(ctx, "Z", 44, 40, 40, col=rgba(CYAN, a))
+    ctx.restore()
+    axes_readout(ctx, rot, 650, 470, appear(t, 0.1, 0.4))
+    gp = appear(t, w(s_axes, "gravedad"), 0.4)
+    if gp > 0:
+        a = clamp(gp * 1.5)
+        stroke(ctx, [(830, 900), (830, 900 + 360 * ease_in_out(gp))], rgba(YELLOW, a), 14)
+        stroke(ctx, [(798, 1222), (830, 1262), (862, 1222)], rgba(YELLOW, a * clamp(gp * 2 - 1)), 14)
+        spaced(ctx, "g", 870, 1100, 60, col=rgba(YELLOW, a))
+
+
+def person(ctx, x, y, s=1.0, look=1):
+    """Silueta sencilla de cabeza y hombros."""
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(s, s)
+    fill_rr(ctx, -150, 120, 300, 260, 130, linear(0, 120, 0, 380, [(0, (0.30, 0.36, 0.55)), (1, (0.14, 0.17, 0.28))]))
+    disc(ctx, 0, 0, 110, radial(-30, -40, 150, [(0, (0.92, 0.70, 0.58)), (1, (0.70, 0.48, 0.38))]))
+    ctx.new_sub_path()
+    ctx.arc(0, -10, 114, math.pi * 1.02, math.pi * 1.98)
+    ctx.close_path()
+    source(ctx, (0.16, 0.11, 0.08))
+    ctx.fill()
+    disc(ctx, 40 * look, 10, 11, (0.10, 0.08, 0.08))
+    ctx.restore()
+
+
+def s_you(ctx, t):
+    tech_bg(ctx, t)
+
+    def screen(c, tt):
+        photo(c)
+    phone(ctx, 320, 940, 0.85, screen, t, cable=False)
+    stroke(ctx, [(320, 1330), (320, 1420)], rgba(YELLOW, 0.8), 12)
+    stroke(ctx, [(290, 1388), (320, 1424), (350, 1388)], rgba(YELLOW, 0.8), 12)
+    mini_tag(ctx, "SUELO ✓", 320, 1400, 500, 1400, appear(t, 0.1, 0.4), col=YELLOW)
+    p = ease_out_back(appear(t, w(s_you, "sabe"), 0.45))
+    if p > 0:
+        ctx.save()
+        ctx.translate(790, 920)
+        ctx.scale(p, p)
+        person(ctx, 0, 0, 1.25, look=-1)
+        ctx.restore()
+        q = ease_out_back(appear(t, w(s_you, "tú"), 0.35))
+        if q > 0:
+            ctx.save()
+            ctx.translate(800, 600)
+            ctx.scale(q, q)
+            glow(ctx, 0, 0, 150, RED, 0.45, add=True)
+            text(ctx, "?", 0, 0, 200, col=RED, outline=(0, 0, 0), ow=10)
+            ctx.restore()
+
+
+def s_bed(ctx, t):
+    ctx.rectangle(0, 0, W, H)
+    ctx.set_source(radial(540, 900, 1200, [(0, (0.10, 0.11, 0.20)), (1, (0.02, 0.02, 0.05))]))
+    ctx.fill()
+    tech_bg_alpha = 0.5
+    ctx.save()
+    ctx.push_group()
+    tech_bg(ctx, t)
+    ctx.pop_group_to_source()
+    ctx.paint_with_alpha(tech_bg_alpha)
+    ctx.restore()
+    # cama
+    fill_rr(ctx, 40, 1180, 1000, 230, 34, linear(0, 1180, 0, 1410, [(0, (0.80, 0.82, 0.88)), (1, (0.45, 0.47, 0.55))]))
+    soft_ellipse(ctx, 250, 1120, 200, 80, (0.95, 0.95, 0.98), 0.95)
+    # persona tumbada de lado
+    ctx.save()
+    ctx.translate(250, 1040)
+    ctx.rotate(-math.pi / 2)
+    person(ctx, 0, 0, 0.75, look=1)
+    ctx.restore()
+    fill_rr(ctx, 360, 1060, 660, 170, 80, linear(0, 1060, 0, 1230, [(0, (0.30, 0.42, 0.75)), (1, (0.18, 0.25, 0.48))]))
+    stroke(ctx, [(430, 1090), (520, 980), (560, 900)], (0.86, 0.64, 0.52), 34)
+    # el móvil está "girado" para el mundo aunque para sus ojos esté recto
+    ta = w(s_bed, "girado") - 0.1
+    rel = (math.pi / 2) * ease_in_out(prog(t, ta, 0.35))
+
+    def screen(c, tt):
+        c.save()
+        c.rotate(rel)
+        photo(c)
+        c.restore()
+    ctx.save()
+    ctx.translate(600, 760)
+    ctx.rotate(-math.pi / 2)
+    phone(ctx, 0, 0, 0.62, screen, t, cable=False)
+    ctx.restore()
+    p = appear(t, ta + 0.25, 0.4)
+    if p > 0:
+        ctx.save()
+        ctx.translate(880, 600)
+        ctx.scale(ease_out_back(p), ease_out_back(p))
+        glow(ctx, 0, 0, 140, RED, 0.5, add=True)
+        ctx.new_sub_path()
+        ctx.arc(0, 0, 60, -math.pi * 0.4, math.pi * 1.3)
+        source(ctx, RED)
+        ctx.set_line_width(14)
+        ctx.stroke()
+        stroke(ctx, [(30, -82), (18, -52), (52, -40)], RED, 14)
+        ctx.restore()
+        mini_tag(ctx, "SIN QUERER", 880, 680, 860, 860, p, col=RED)
+    stroke(ctx, [(980, 780), (980, 1110)], rgba(YELLOW, 0.75), 12)
+    stroke(ctx, [(950, 1074), (980, 1112), (1010, 1074)], rgba(YELLOW, 0.75), 12)
+
+
+def rotation_lock(ctx, x, y, s, col):
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(s, s)
+    ctx.new_sub_path()
+    ctx.arc(0, 0, 40, -math.pi * 0.3, math.pi * 1.45)
+    source(ctx, col)
+    ctx.set_line_width(8)
+    ctx.stroke()
+    stroke(ctx, [(18, -44), (26, -30), (40, -36)], col, 8)
+    fill_rr(ctx, -16, -4, 32, 24, 5, col)
+    ctx.new_sub_path()
+    ctx.arc(0, -6, 10, math.pi, 2 * math.pi)
+    ctx.set_line_width(6)
+    ctx.stroke()
+    ctx.restore()
+
+
+def share_screen(t, picked, locked, sent, follow):
+    def draw(c, tt):
+        c.save()
+        c.translate(0, -230)
+        c.scale(0.45, 0.45)
+        photo(c)
+        c.restore()
+        if follow > 0:
+            fill_rr(c, -95, -330, 190, 56, 28, rgba((0.95, 0.25, 0.30), follow))
+            text(c, "SEGUIR", 0, -302, 28, col=(1, 1, 1, follow))
+        fill_rr(c, -190, -20, 380, 420, 36, (0.10, 0.11, 0.16))
+        text(c, "Enviar a", -160, 30, 28, col=(1, 1, 1, 0.8), anchor="left")
+        for k, (name, col) in enumerate([("Lucía", (0.85, 0.45, 0.55)), ("Dani", (0.35, 0.60, 0.95)), ("Marta", (0.40, 0.75, 0.50)), ("Leo", (0.90, 0.70, 0.30))]):
+            ax = -135 + 90 * k
+            disc(c, ax, 120, 34, col)
+            text(c, name[0], ax, 120, 32)
+            text(c, name, ax, 182, 20, col=(1, 1, 1, 0.75))
+            if k == 1 and picked > 0:
+                c.arc(ax, 120, 42, 0, 2 * math.pi)
+                source(c, rgba(CYAN, picked))
+                c.set_line_width(6)
+                c.stroke()
+                if locked > 0:
+                    rotation_lock(c, ax + 34, 80, 0.45 * ease_out_back(locked), (1.0, 0.80, 0.24))
+        fill_rr(c, -160, 260, 320, 70, 35, mix((0.25, 0.45, 0.95), GREEN, sent))
+        text(c, "Enviado ✓" if sent > 0.5 else "Enviar", 0, 295, 30)
+    return draw
+
+
+def s_share(ctx, t):
+    tech_bg(ctx, t)
+    fol = appear(t, w(s_share, "Síguenos"), 0.4)
+    pk = appear(t, w(s_share, "amigo"), 0.35)
+    lk = appear(t, w(s_share, "rotación"), 0.4)
+    snt = appear(t, w(s_share, "bloqueada") + 0.2, 0.3)
+    phone(ctx, 540, 930, 1.1, share_screen(t, pk, lk, snt, fol), t, cable=False)
+    if snt > 0:
+        glow(ctx, 540, 1250, 300, GREEN, 0.35 * snt, add=True)
 
 
 SCENES = [
@@ -408,16 +596,21 @@ SCENES = [
     Scene("Pegados a ella hay peines de silicio, más finos que un pelo.", s_combs, key="peines", duration=3.2, sfx=[("@peines", "pop")]),
     Scene("Cuando se mueve, cambia la distancia entre los dientes, y el chip lo mide.", s_measure, key="distancia",
           sfx=[("@distancia", "pop")]),
+    Scene("Con eso sabe, en cada eje, hacia dónde tira la gravedad.", s_axes, key="eje", sfx=[("@eje", "pop"), ("@gravedad", "thunk")]),
     Scene("Por eso sabe dónde está el suelo y gira la pantalla.", s_floor, key="suelo", duration=3.2, sfx=[("@suelo", "pop"), ("@gira", "whoosh")]),
     Scene("La misma pieza cuenta tus pasos.", s_steps, key="pasos", duration=2.4, sfx=[("@cuenta", "tick"), ("@pasos", "tick")]),
-    Scene("Síguenos para más curiosidades.", s_cta, key="curiosidades", duration=2.4, sfx=[(0.05, "pop"), (1.3, "pop")]),
+    Scene("Pero esa pieza no sabe dónde estás tú.", s_you, key="tú", duration=3.0, sfx=[("@tú", "pop")]),
+    Scene("Cuando te tumbas de lado en la cama, cree que lo has girado, y gira la pantalla sin querer.", s_bed, key="cama",
+          sfx=[("@girado", "whoosh"), ("@querer", "thunk")]),
+    Scene("Síguenos y mándaselo a ese amigo que siempre tiene la rotación bloqueada.", s_share, key="amigo", duration=5.2,
+          sfx=[("@Síguenos", "pop"), ("@amigo", "pop"), ("@rotación", "pop"), ("@bloqueada", "chime")]),
 ]
 
 POST = """¿Cómo sabe tu móvil que lo has girado? 📱
 
-Tiene una pieza que se mueve: una masa de silicio colgada de muelles, dentro de un chip de 2 mm. La gravedad tira de ella y unos peines más finos que un pelo miden cuánto se desplaza. Así sabe dónde está el suelo… y cuenta tus pasos.
+Dentro tiene una pieza que se mueve: una masa de silicio colgada de muelles, en un chip de 2 mm. La gravedad tira de ella y unos peines más finos que un pelo miden cuánto se desplaza en cada eje. Así sabe dónde está el suelo… pero no dónde estás tú. Por eso, en la cama, te gira la pantalla sin querer.
 
-¿Sabías que tu móvil tenía piezas que se mueven? 👇
+Mándaselo a ese amigo que siempre tiene la rotación bloqueada 🔒
 
 #curiosidades #tecnologia #movil #ciencia #sabiasque
 """
@@ -435,11 +628,11 @@ if __name__ == "__main__":
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")
         dest = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else os.path.join(out, "preview.png")
-        preview(SCENES, dest, narrator=narrator, style=TOP)
+        preview(SCENES, dest, narrator=narrator, style=TOP_SHORT)
         print("preview:", dest)
     else:
         total = render(SCENES, os.path.join(out, "giro-movil.mp4"), cover_png=os.path.join(out, "fotograma.png"),
-                       cover_at=(0, 1.5), narrator=narrator, style=TOP)
+                       cover_at=(0, 1.5), narrator=narrator, style=TOP_SHORT)
         os.remove(os.path.join(out, "fotograma.png"))
         with open(os.path.join(out, "texto-del-post.txt"), "w") as f:
             f.write(POST)

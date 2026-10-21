@@ -85,3 +85,66 @@ def phone(ctx, x, y, s=1.0, screen=None, t=0.0, cable=True):
     ctx.restore()
     fill_rr(ctx, -62, -h_ / 2 + 40, 124, 34, 17, (0, 0, 0))
     ctx.restore()
+
+
+def spaced(ctx, s, x, y, size, col=WHITE, spacing=0.18, anchor="left"):
+    """Mayúsculas con letras separadas (etiquetas de plano técnico)."""
+    import cairo
+    ctx.select_font_face("Inter", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    adv = [ctx.text_extents(ch).x_advance + size * spacing for ch in s]
+    width = sum(adv) - size * spacing
+    x0 = x - (width if anchor == "right" else width / 2 if anchor == "center" else 0)
+    source(ctx, (0, 0, 0, 0.6 * (col[3] if len(col) > 3 else 1)))
+    for ch, a in zip(s, adv):
+        ctx.move_to(x0 + 1, y + size * 0.36 + 2)
+        ctx.show_text(ch)
+        x0 += a
+    x0 = x - (width if anchor == "right" else width / 2 if anchor == "center" else 0)
+    source(ctx, col)
+    for ch, a in zip(s, adv):
+        ctx.move_to(x0, y + size * 0.36)
+        ctx.show_text(ch)
+        x0 += a
+
+
+def mini_tag(ctx, s, ax, ay, lx, ly, p, col=WHITE, size=30):
+    """Etiqueta discreta: punto pequeño, línea fina y texto espaciado."""
+    if p <= 0:
+        return
+    a, e = clamp(p * 1.5), ease_in_out(p)
+    disc(ctx, ax, ay, 6, rgba(col, a))
+    stroke(ctx, [(ax, ay), (ax + (lx - ax) * e, ay + (ly - ay) * e)], rgba(col, 0.7 * a), 2)
+    if p > 0.5:
+        b = clamp((p - 0.5) / 0.5)
+        right = lx >= ax
+        spaced(ctx, s, lx + (10 if right else -10), ly, size, col=rgba(col, b), anchor="left" if right else "right")
+
+
+def readout(ctx, x, y, rows, a=1.0, title=None, unit=""):
+    """Panel de datos en directo con números de ancho fijo: rows = [(nombre, valor, color)]."""
+    import cairo
+    if a <= 0:
+        return
+    h = 64 * len(rows) + (54 if title else 26)
+    fill_rr(ctx, x, y, 360, h, 22, (0.02, 0.03, 0.08, 0.72 * a))
+    rr(ctx, x, y, 360, h, 22)
+    source(ctx, (1, 1, 1, 0.14 * a))
+    ctx.set_line_width(2)
+    ctx.stroke()
+    yy = y + 22
+    if title:
+        spaced(ctx, title, x + 24, yy + 10, 22, col=(0.65, 0.78, 1.0, a))
+        yy += 34
+    for name, val, col in rows:
+        spaced(ctx, name, x + 24, yy + 26, 26, col=rgba(col, a))
+        ctx.select_font_face("DejaVu Sans Mono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+        ctx.set_font_size(44)
+        s = f"{val:+.2f}".replace(".", ",")
+        ext = ctx.text_extents(s)
+        source(ctx, (1, 1, 1, a))
+        ctx.move_to(x + 360 - 24 - ext.x_advance - (70 if unit else 0), yy + 42)
+        ctx.show_text(s)
+        if unit:
+            text(ctx, unit, x + 360 - 20, yy + 30, 22, col=(1.0, 0.80, 0.24, a), anchor="right")
+        yy += 64
