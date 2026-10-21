@@ -179,7 +179,7 @@ def cup_section(ctx, x, y, s, t, vib=0.0, glow_out=0.0, glow_in=0.0, chip=0.0, l
 
     def P(px, py):
         return x + s * px, y + s * py
-    spots = {"outer": ((-198, -150), (-100, -470)), "inner": ((108, 130), (60, 500)), "chip": ((-93, 135), (-20, 430)),
+    spots = {"outer": ((-198, -150), (-60, -380)), "inner": ((108, 130), (60, 500)), "chip": ((-93, 135), (-20, 430)),
              "driver": ((40, -120), (150, -520)), "ear": ((300, 20), (180, 370))}
     names = {"outer": "MICRÓFONO EXTERIOR", "inner": "MICRÓFONO INTERIOR", "chip": "CHIP", "driver": "ALTAVOZ", "ear": "TU OÍDO"}
     for key, p in labels.items():

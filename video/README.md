@@ -11,6 +11,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 
 - `movil_carga.py`: ¿por qué el móvil carga lento desde el 80 %? Formato de la cuenta de referencia (mito desmentido, corte técnico con etiquetas, animaciones sincronizadas con palabras) → `video/out/movil-carga/`.
 - `giro_movil.py`: ¿cómo sabe tu móvil que lo has girado? Subtítulos arriba (fuera de la zona que tapa Reels), 2 líneas y palabra clave (`style=TOP`, `Scene(key=...)`). Guion y fuentes en `video/out/giro-movil/guion.md`.
+- `auriculares.py`: tus auriculares quitan el ruido añadiendo más ruido (cancelación activa). Estilo `TOP_SHORT`; guion y fuentes en `video/out/auriculares/guion.md`.
 - `piezas.py`: fondo técnico, etiquetas y móvil compartidos por los vídeos de estilo técnico.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 
