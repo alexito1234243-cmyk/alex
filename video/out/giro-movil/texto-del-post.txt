@@ -1,7 +1,7 @@
 ¿Cómo sabe tu móvil que lo has girado? 📱
 
-Tiene una pieza que se mueve: una masa de silicio colgada de muelles, dentro de un chip de 2 mm. La gravedad tira de ella y unos peines más finos que un pelo miden cuánto se desplaza. Así sabe dónde está el suelo… y cuenta tus pasos.
+Dentro tiene una pieza que se mueve: una masa de silicio colgada de muelles, en un chip de 2 mm. La gravedad tira de ella y unos peines más finos que un pelo miden cuánto se desplaza en cada eje. Así sabe dónde está el suelo… pero no dónde estás tú. Por eso, en la cama, te gira la pantalla sin querer.
 
-¿Sabías que tu móvil tenía piezas que se mueven? 👇
+Mándaselo a ese amigo que siempre tiene la rotación bloqueada 🔒
 
 #curiosidades #tecnologia #movil #ciencia #sabiasque
