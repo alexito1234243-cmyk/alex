@@ -14,7 +14,7 @@ Datos y fuentes:
 - La gravedad tira siempre de la masa: así el móvil sabe dónde está el suelo y gira la pantalla;
   el mismo sensor cuenta los pasos.
 
-Uso: python3 video/giro_movil.py [--voz santa|dora|alex] [--sin-voz]  ->  video/out/giro-movil/
+Uso: python3 video/giro_movil.py [--voz santa|dora|alex|eleven] [--sin-voz]  ->  video/out/giro-movil/
      python3 video/giro_movil.py --preview [png]
 """
 import math
@@ -428,9 +428,8 @@ if __name__ == "__main__":
     os.makedirs(out, exist_ok=True)
     narrator = None
     if "--sin-voz" not in sys.argv:
-        from voz import Narrator
-        voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "santa"
-        narrator = Narrator(voice, speed=1.04)  # ritmo natural: acelerar Kokoro lo hace sonar más artificial
+        from voz import narrator_from_args
+        narrator = narrator_from_args(sys.argv, speed=1.04)  # ritmo natural: acelerar Kokoro lo hace sonar más artificial
         narrator.gap = 0.22  # frases encadenadas, como una narración seguida
         narrator.min_scene = 1.6
     if "--preview" in sys.argv:

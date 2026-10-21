@@ -58,6 +58,36 @@ class Narrator:
         return 0.9 * x / (np.max(np.abs(x)) + 1e-9)
 
 
+class ElevenLabsNarrator:
+    """Voz de ElevenLabs (misma interfaz que Narrator). Necesita la variable ELEVENLABS_API_KEY, el id de la
+    voz en ELEVENLABS_VOICE_ID (o como argumento) y que la red del entorno permita api.elevenlabs.io."""
+
+    def __init__(self, voice_id=None, model="eleven_multilingual_v2"):
+        self.key = os.environ.get("ELEVENLABS_API_KEY")
+        self.voice_id = voice_id or os.environ.get("ELEVENLABS_VOICE_ID")
+        if not self.key or not self.voice_id:
+            sys.exit("Faltan ELEVENLABS_API_KEY y/o ELEVENLABS_VOICE_ID en el entorno")
+        self.model = model
+
+    def say(self, text):
+        import json
+        import urllib.request
+        req = urllib.request.Request(
+            f"https://api.elevenlabs.io/v1/text-to-speech/{self.voice_id}?output_format=pcm_24000",
+            data=json.dumps({"text": clean(text), "model_id": self.model}).encode(),
+            headers={"xi-api-key": self.key, "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=120) as r:
+            pcm = np.frombuffer(r.read(), dtype="<i2").astype(np.float32) / 32768
+        x = resample(trim(pcm, 24000), 24000)
+        return 0.9 * x / (np.max(np.abs(x)) + 1e-9)
+
+
+def narrator_from_args(argv, default="santa", speed=1.04):
+    """--voz santa|dora|alex usa Kokoro; --voz eleven usa ElevenLabs."""
+    voice = argv[argv.index("--voz") + 1] if "--voz" in argv else default
+    return ElevenLabsNarrator() if voice == "eleven" else Narrator(voice, speed=speed)
+
+
 def transcribe(samples, sr=SR):
     """Transcribe con Whisper para comprobar que la voz se entiende."""
     import sherpa_onnx
