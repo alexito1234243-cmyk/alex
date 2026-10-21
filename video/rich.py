@@ -252,7 +252,8 @@ def narrate(scenes, narrator, sr=44100):
     """Genera la locución de cada escena y ajusta su duración a la de la frase."""
     for sc in scenes:
         sc.audio = narrator.say(sc.voice or sc.text)
-        sc.duration = max(VOICE_LEAD + len(sc.audio) / sr + 0.45, sc.min_duration, 2.2)
+        gap = getattr(narrator, "gap", 0.45)  # silencio tras la frase antes de la escena siguiente
+        sc.duration = max(VOICE_LEAD + len(sc.audio) / sr + gap, sc.min_duration, getattr(narrator, "min_scene", 2.2))
 
 
 def _syllables(w):

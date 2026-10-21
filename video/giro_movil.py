@@ -398,19 +398,19 @@ def s_cta(ctx, t):
 
 
 SCENES = [
-    Scene("¿Cómo sabe tu móvil que lo has girado?", s_hook, key="girado", sfx=[("@girado", "whoosh")]),
+    Scene("¿Cómo sabe tu móvil que lo has girado?", s_hook, key="girado", duration=3.1, sfx=[("@girado", "whoosh")]),
     Scene("Tiene una pieza que se mueve, aunque no lo notes.", s_piece, key="pieza", sfx=[("@pieza", "pop")]),
-    Scene("Se esconde en un chip más pequeño que una lenteja.", s_chip, key="lenteja", sfx=[("@chip", "pop"), ("@lenteja", "pop")]),
+    Scene("Se esconde en un chip más pequeño que una lenteja.", s_chip, key="lenteja", duration=3.0, sfx=[("@chip", "pop"), ("@lenteja", "pop")]),
     Scene("Por dentro hay una masa diminuta colgada de muelles.", s_inside, key="muelles", sfx=[("@masa", "pop"), ("@muelles", "pop")]),
     Scene("La gravedad siempre tira de ella hacia abajo.", s_gravity, key="gravedad", sfx=[("@gravedad", "thunk")]),
     Scene("Si giras el móvil, la masa se mueve menos que el grosor de un pelo.", s_shift, key="pelo",
           sfx=[("@giras", "whoosh"), ("@pelo", "pop")]),
-    Scene("Pegados a ella hay peines de silicio, más finos que un pelo.", s_combs, key="peines", sfx=[("@peines", "pop")]),
+    Scene("Pegados a ella hay peines de silicio, más finos que un pelo.", s_combs, key="peines", duration=3.2, sfx=[("@peines", "pop")]),
     Scene("Cuando se mueve, cambia la distancia entre los dientes, y el chip lo mide.", s_measure, key="distancia",
           sfx=[("@distancia", "pop")]),
-    Scene("Por eso sabe dónde está el suelo y gira la pantalla.", s_floor, key="suelo", sfx=[("@suelo", "pop"), ("@gira", "whoosh")]),
-    Scene("La misma pieza cuenta tus pasos.", s_steps, key="pasos", sfx=[("@cuenta", "tick"), ("@pasos", "tick")]),
-    Scene("Síguenos para más curiosidades.", s_cta, key="curiosidades", sfx=[(0.05, "pop"), (1.3, "pop")]),
+    Scene("Por eso sabe dónde está el suelo y gira la pantalla.", s_floor, key="suelo", duration=3.2, sfx=[("@suelo", "pop"), ("@gira", "whoosh")]),
+    Scene("La misma pieza cuenta tus pasos.", s_steps, key="pasos", duration=2.4, sfx=[("@cuenta", "tick"), ("@pasos", "tick")]),
+    Scene("Síguenos para más curiosidades.", s_cta, key="curiosidades", duration=2.4, sfx=[(0.05, "pop"), (1.3, "pop")]),
 ]
 
 POST = """¿Cómo sabe tu móvil que lo has girado? 📱
@@ -430,7 +430,9 @@ if __name__ == "__main__":
     if "--sin-voz" not in sys.argv:
         from voz import Narrator
         voice = sys.argv[sys.argv.index("--voz") + 1] if "--voz" in sys.argv else "santa"
-        narrator = Narrator(voice, speed=1.14)
+        narrator = Narrator(voice, speed=1.04)  # ritmo natural: acelerar Kokoro lo hace sonar más artificial
+        narrator.gap = 0.22  # frases encadenadas, como una narración seguida
+        narrator.min_scene = 1.6
     if "--preview" in sys.argv:
         i = sys.argv.index("--preview")
         dest = sys.argv[i + 1] if len(sys.argv) > i + 1 and not sys.argv[i + 1].startswith("--") else os.path.join(out, "preview.png")
