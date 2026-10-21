@@ -22,8 +22,8 @@ import os
 import sys
 
 from engine import H, W, clamp, ease_in_out, ease_out_back, prog
-from piezas import CYAN, GREEN, ORANGE, RED, WHITE, appear, mini_tag, phone, readout, spaced, tech_bg
-from rich import (TOP_SHORT, YELLOW, Scene, disc, fill_rr, glow, linear, mix, poly, preview, radial,
+from piezas import CYAN, GREEN, ORANGE, RED, WHITE, appear, mini_tag, person, phone, readout, share_screen, spaced, tech_bg
+from rich import (TOP_SHORT, YELLOW, Scene, disc, fill_rr, glow, linear, poly, preview, radial,
                   render, rgba, soft_ellipse, source, stroke, text, word_time)
 
 SILVER = (0.78, 0.81, 0.88)
@@ -431,22 +431,6 @@ def s_axes(ctx, t):
         spaced(ctx, "g", 870, 1100, 60, col=rgba(YELLOW, a))
 
 
-def person(ctx, x, y, s=1.0, look=1):
-    """Silueta sencilla de cabeza y hombros."""
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    fill_rr(ctx, -150, 120, 300, 260, 130, linear(0, 120, 0, 380, [(0, (0.30, 0.36, 0.55)), (1, (0.14, 0.17, 0.28))]))
-    disc(ctx, 0, 0, 110, radial(-30, -40, 150, [(0, (0.92, 0.70, 0.58)), (1, (0.70, 0.48, 0.38))]))
-    ctx.new_sub_path()
-    ctx.arc(0, -10, 114, math.pi * 1.02, math.pi * 1.98)
-    ctx.close_path()
-    source(ctx, (0.16, 0.11, 0.08))
-    ctx.fill()
-    disc(ctx, 40 * look, 10, 11, (0.10, 0.08, 0.08))
-    ctx.restore()
-
-
 def s_you(ctx, t):
     tech_bg(ctx, t)
 
@@ -545,42 +529,19 @@ def rotation_lock(ctx, x, y, s, col):
     ctx.restore()
 
 
-def share_screen(t, picked, locked, sent, follow):
-    def draw(c, tt):
-        c.save()
-        c.translate(0, -230)
-        c.scale(0.45, 0.45)
-        photo(c)
-        c.restore()
-        if follow > 0:
-            fill_rr(c, -95, -330, 190, 56, 28, rgba((0.95, 0.25, 0.30), follow))
-            text(c, "SEGUIR", 0, -302, 28, col=(1, 1, 1, follow))
-        fill_rr(c, -190, -20, 380, 420, 36, (0.10, 0.11, 0.16))
-        text(c, "Enviar a", -160, 30, 28, col=(1, 1, 1, 0.8), anchor="left")
-        for k, (name, col) in enumerate([("Lucía", (0.85, 0.45, 0.55)), ("Dani", (0.35, 0.60, 0.95)), ("Marta", (0.40, 0.75, 0.50)), ("Leo", (0.90, 0.70, 0.30))]):
-            ax = -135 + 90 * k
-            disc(c, ax, 120, 34, col)
-            text(c, name[0], ax, 120, 32)
-            text(c, name, ax, 182, 20, col=(1, 1, 1, 0.75))
-            if k == 1 and picked > 0:
-                c.arc(ax, 120, 42, 0, 2 * math.pi)
-                source(c, rgba(CYAN, picked))
-                c.set_line_width(6)
-                c.stroke()
-                if locked > 0:
-                    rotation_lock(c, ax + 34, 80, 0.45 * ease_out_back(locked), (1.0, 0.80, 0.24))
-        fill_rr(c, -160, 260, 320, 70, 35, mix((0.25, 0.45, 0.95), GREEN, sent))
-        text(c, "Enviado ✓" if sent > 0.5 else "Enviar", 0, 295, 30)
-    return draw
-
-
 def s_share(ctx, t):
     tech_bg(ctx, t)
     fol = appear(t, w(s_share, "Síguenos"), 0.4)
     pk = appear(t, w(s_share, "amigo"), 0.35)
     lk = appear(t, w(s_share, "rotación"), 0.4)
     snt = appear(t, w(s_share, "bloqueada") + 0.2, 0.3)
-    phone(ctx, 540, 930, 1.1, share_screen(t, pk, lk, snt, fol), t, cable=False)
+    def thumb(c, tt):
+        c.scale(0.45, 0.45)
+        photo(c)
+
+    def lock(c, x, y, s):
+        rotation_lock(c, x, y, 0.45 * s, (1.0, 0.80, 0.24))
+    phone(ctx, 540, 930, 1.1, share_screen(pk, lk, snt, fol, thumb=thumb, badge=lock), t, cable=False)
     if snt > 0:
         glow(ctx, 540, 1250, 300, GREEN, 0.35 * snt, add=True)
 

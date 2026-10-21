@@ -1,7 +1,9 @@
 """Piezas comunes de los vídeos de estilo técnico: fondo con rejilla, etiquetas tipo plano,
 el móvil y la palabra a la que va sincronizada cada animación."""
-from engine import H, W, clamp, ease_in_out, prog
-from rich import disc, fill_rr, glow, linear, poly, radial, rgba, rr, soft_ellipse, source, stroke, text
+import math
+
+from engine import H, W, clamp, ease_in_out, ease_out_back, prog
+from rich import disc, fill_rr, glow, linear, mix, poly, radial, rgba, rr, soft_ellipse, source, stroke, text
 
 BG = (0.031, 0.035, 0.045)
 CYAN = (0.25, 0.85, 1.0)
@@ -148,3 +150,51 @@ def readout(ctx, x, y, rows, a=1.0, title=None, unit=""):
         if unit:
             text(ctx, unit, x + 360 - 20, yy + 30, 22, col=(1.0, 0.80, 0.24, a), anchor="right")
         yy += 64
+
+
+# ---------- personas y pantallas ----------
+
+def person(ctx, x, y, s=1.0, look=1):
+    """Silueta sencilla de cabeza y hombros."""
+    ctx.save()
+    ctx.translate(x, y)
+    ctx.scale(s, s)
+    fill_rr(ctx, -150, 120, 300, 260, 130, linear(0, 120, 0, 380, [(0, (0.30, 0.36, 0.55)), (1, (0.14, 0.17, 0.28))]))
+    disc(ctx, 0, 0, 110, radial(-30, -40, 150, [(0, (0.92, 0.70, 0.58)), (1, (0.70, 0.48, 0.38))]))
+    ctx.new_sub_path()
+    ctx.arc(0, -10, 114, math.pi * 1.02, math.pi * 1.98)
+    ctx.close_path()
+    source(ctx, (0.16, 0.11, 0.08))
+    ctx.fill()
+    disc(ctx, 40 * look, 10, 11, (0.10, 0.08, 0.08))
+    ctx.restore()
+
+
+def share_screen(picked, badge_p, sent, follow, thumb=None, badge=None):
+    """Pantalla de compartir: se elige a un amigo (con un icono encima) y el botón pasa a «Enviado»."""
+    def draw(c, tt):
+        if thumb:
+            c.save()
+            c.translate(0, -230)
+            thumb(c, tt)
+            c.restore()
+        if follow > 0:
+            fill_rr(c, -95, -330, 190, 56, 28, rgba((0.95, 0.25, 0.30), follow))
+            text(c, "SEGUIR", 0, -302, 28, col=(1, 1, 1, follow))
+        fill_rr(c, -190, -20, 380, 420, 36, (0.10, 0.11, 0.16))
+        text(c, "Enviar a", -160, 30, 28, col=(1, 1, 1, 0.8), anchor="left")
+        for k, (name, col) in enumerate([("Lucía", (0.85, 0.45, 0.55)), ("Dani", (0.35, 0.60, 0.95)), ("Marta", (0.40, 0.75, 0.50)), ("Leo", (0.90, 0.70, 0.30))]):
+            ax = -135 + 90 * k
+            disc(c, ax, 120, 34, col)
+            text(c, name[0], ax, 120, 32)
+            text(c, name, ax, 182, 20, col=(1, 1, 1, 0.75))
+            if k == 1 and picked > 0:
+                c.arc(ax, 120, 42, 0, 2 * math.pi)
+                source(c, rgba(CYAN, picked))
+                c.set_line_width(6)
+                c.stroke()
+                if badge and badge_p > 0:
+                    badge(c, ax + 34, 80, ease_out_back(badge_p))
+        fill_rr(c, -160, 260, 320, 70, 35, mix((0.25, 0.45, 0.95), GREEN, sent))
+        text(c, "Enviado ✓" if sent > 0.5 else "Enviar", 0, 295, 30)
+    return draw
