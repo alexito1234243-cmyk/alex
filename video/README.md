@@ -18,6 +18,8 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 - `piezas.py`: fondo técnico, etiquetas, panel de datos y móvil compartidos por los vídeos de estilo técnico.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 
+Para hacer un vídeo nuevo con Claude: la skill `.claude/skills/videos-curiosidades/` recoge el flujo completo (tema, guion, voz comprobada con Whisper, escenas, render, portada, guion.md y post), con una plantilla y scripts de comprobación.
+
 Requisitos: `ffmpeg`, `pip install pycairo numpy`.
 
 ## Voz en off
