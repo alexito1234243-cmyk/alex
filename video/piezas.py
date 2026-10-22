@@ -2,6 +2,8 @@
 el móvil y la palabra a la que va sincronizada cada animación."""
 import math
 
+import cairo
+
 from engine import H, W, clamp, ease_in_out, ease_out_back, prog
 from rich import disc, fill_rr, glow, linear, mix, poly, radial, rgba, rr, soft_ellipse, source, stroke, text
 
@@ -91,7 +93,6 @@ def phone(ctx, x, y, s=1.0, screen=None, t=0.0, cable=True):
 
 def spaced(ctx, s, x, y, size, col=WHITE, spacing=0.18, anchor="left"):
     """Mayúsculas con letras separadas (etiquetas de plano técnico)."""
-    import cairo
     ctx.select_font_face("Inter", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
     ctx.set_font_size(size)
     adv = [ctx.text_extents(ch).x_advance + size * spacing for ch in s]
@@ -123,9 +124,28 @@ def mini_tag(ctx, s, ax, ay, lx, ly, p, col=WHITE, size=30):
         spaced(ctx, s, lx + (10 if right else -10), ly, size, col=rgba(col, b), anchor="left" if right else "right")
 
 
+def panel(ctx, x, y, title, value, unit, a=1.0, col=WHITE, wdt=380):
+    """Panel con un título pequeño y un valor grande (y su unidad en amarillo)."""
+    if a <= 0:
+        return
+    fill_rr(ctx, x, y, wdt, 132, 22, (0.02, 0.03, 0.08, 0.72 * a))
+    rr(ctx, x, y, wdt, 132, 22)
+    source(ctx, (1, 1, 1, 0.14 * a))
+    ctx.set_line_width(2)
+    ctx.stroke()
+    spaced(ctx, title, x + 24, y + 30, 22, col=(0.65, 0.78, 1.0, a))
+    ctx.select_font_face("DejaVu Sans Mono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(54)
+    ext = ctx.text_extents(value)
+    source(ctx, rgba(col, a))
+    ctx.move_to(x + 24, y + 104)
+    ctx.show_text(value)
+    if unit:
+        text(ctx, unit, x + 36 + ext.x_advance, y + 88, 26, col=(1.0, 0.80, 0.24, a), anchor="left")
+
+
 def readout(ctx, x, y, rows, a=1.0, title=None, unit=""):
     """Panel de datos en directo con números de ancho fijo: rows = [(nombre, valor, color)]."""
-    import cairo
     if a <= 0:
         return
     h = 64 * len(rows) + (54 if title else 26)

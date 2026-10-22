@@ -13,6 +13,7 @@ import auriculares as au
 import avion_luces as av
 import giro_movil as gm
 import movil_carga as mc
+import ojos_colores as oc
 import piezas
 import tierra_agujero as ti
 from engine import FONT, H, W
@@ -126,6 +127,18 @@ def cover_auriculares(grain):
     save_jpg(surf, os.path.join(HERE, "out", "auriculares", "portada.jpg"))
 
 
+def cover_ojos(grain):
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    t = 2.2
+    oc.tech_bg(ctx, t)
+    oc.phosphenes(ctx, 540, 1180, 400, t, a=1.0, burst=0.6)
+    oc.closed_eye(ctx, 520, 1600, 0.85, t, rub=1.0)
+    finish(ctx, grain)
+    title(ctx, [("¿POR QUÉ VES", False), ("COLORES", True), ("AL FROTARTE", False), ("LOS OJOS?", False)], 250)
+    save_jpg(surf, os.path.join(HERE, "out", "ojos-colores", "portada.jpg"))
+
+
 def avatar(grain, size=1080):
     """Interrogación amarilla cuyo punto es la Tierra: se lee incluso a 110 px."""
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
@@ -170,5 +183,6 @@ if __name__ == "__main__":
     cover_movil(grain)
     cover_giro(grain)
     cover_auriculares(grain)
+    cover_ojos(grain)
     avatar(grain)
     print("OK")

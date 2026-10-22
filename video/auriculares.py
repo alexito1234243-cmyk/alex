@@ -26,9 +26,9 @@ import sys
 import cairo
 
 from engine import clamp, ease_in_out, prog
-from piezas import (CYAN, GREEN, RED, WHITE, appear, mini_tag, person, phone, share_screen, spaced, tech_bg)
+from piezas import (CYAN, GREEN, RED, WHITE, appear, mini_tag, panel, person, phone, share_screen, spaced, tech_bg)
 from rich import (TOP_SHORT, YELLOW, Scene, disc, fill_rr, glow, linear, mix, poly, preview, radial, render,
-                  rgba, rr, soft_ellipse, source, stroke, text, word_time)
+                  rgba, soft_ellipse, source, stroke, word_time)
 
 NOISE = (1.0, 0.36, 0.30)
 ANTI = CYAN
@@ -69,25 +69,6 @@ def glow_line(ctx, pts, col, width=7, a=1.0):
     stroke(ctx, pts, rgba(col, 0.35 * a), width * 2.2)
     ctx.restore()
     stroke(ctx, pts, rgba(mix(col, WHITE, 0.35), a), width)
-
-
-def panel(ctx, x, y, title, value, unit, a=1.0, col=WHITE, wdt=380):
-    if a <= 0:
-        return
-    fill_rr(ctx, x, y, wdt, 132, 22, (0.02, 0.03, 0.08, 0.72 * a))
-    rr(ctx, x, y, wdt, 132, 22)
-    source(ctx, (1, 1, 1, 0.14 * a))
-    ctx.set_line_width(2)
-    ctx.stroke()
-    spaced(ctx, title, x + 24, y + 30, 22, col=(0.65, 0.78, 1.0, a))
-    ctx.select_font_face("DejaVu Sans Mono", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
-    ctx.set_font_size(54)
-    ext = ctx.text_extents(value)
-    source(ctx, rgba(col, a))
-    ctx.move_to(x + 24, y + 104)
-    ctx.show_text(value)
-    if unit:
-        text(ctx, unit, x + 36 + ext.x_advance, y + 88, 26, col=(1.0, 0.80, 0.24, a), anchor="left")
 
 
 # ---------- los auriculares ----------

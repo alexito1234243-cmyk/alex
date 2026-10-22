@@ -341,8 +341,11 @@ def word_time(scene, needle):
 
 
 def sfx_time(scene, at):
-    """Los efectos pueden ir a un segundo fijo o a una palabra: "@palabra"."""
-    return word_time(scene, at[1:]) if isinstance(at, str) else at
+    """Los efectos pueden ir a un segundo fijo, a una palabra ("@palabra") o un poco después ("@palabra+0.3")."""
+    if not isinstance(at, str):
+        return at
+    word, _, delay = at[1:].partition("+")
+    return word_time(scene, word) + float(delay or 0)
 
 
 # Subtítulos abajo con la palabra que suena resaltada (vídeos antiguos), o arriba, fuera de la
