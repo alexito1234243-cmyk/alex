@@ -2,8 +2,8 @@
 
 Gancho con la experiencia que todos han vivido, giro («no es luz»), el mecanismo en 4 pasos
 (apretar → la retina se estira → sus neuronas se disparan → el cerebro lo lee como luz), el dato
-de Newton y una pregunta fácil de contestar al final. El gancho, la cabeza con el nervio óptico y el
-retrato de Newton son imágenes generadas con Flow (video/assets/ojos-colores/); el resto está dibujado.
+de Newton y una pregunta fácil de contestar al final. El gancho, la cabeza con el nervio óptico, los
+fosfenos y el retrato de Newton son imágenes generadas con Flow (video/assets/ojos-colores/); el resto está dibujado.
 
 Datos y fuentes:
 - Fosfeno (del griego phôs, «luz», y phainein, «mostrar»): ver luz sin que entre luz en el ojo. Los más
@@ -309,6 +309,7 @@ NEWTON_TOP = (0.051, 0.037, 0.025)
 NERVE_PTS = [(339, 1069), (387, 1069), (435, 1061), (484, 1035), (532, 991), (581, 973), (629, 974), (677, 989),
              (726, 1004), (774, 1006), (810, 975), (840, 930)]
 BRAIN_SPOT = (845, 925)  # la zona de la vista, al fondo del cerebro
+PHOS_C = (542, 960)  # centro del damero de la foto de los fosfenos
 
 
 @functools.lru_cache(maxsize=None)
@@ -524,9 +525,25 @@ def s_same(ctx, t):
 
 
 def s_phos(ctx, t):
-    tech_bg(ctx, t)
     name = appear(t, w(s_phos, "fosfenos"), 0.5)
-    phosphenes(ctx, 540, 960, 430 + 30 * ease_out_back(name), t, a=1.0, burst=name)
+    ctx.set_source_rgb(0, 0, 0)
+    ctx.paint()
+    pic = photo("escena-07-fosfenos.jpg").frame(t)
+    cx, cy = PHOS_C
+    k = 1 + 0.08 * ease_out_back(name)
+    ctx.save()  # el damero gira despacio y, al decir «fosfenos», crece y se enciende
+    ctx.translate(cx, cy)
+    ctx.rotate(0.07 * t)
+    ctx.scale(k, k)
+    ctx.translate(-cx, -cy)
+    ctx.set_source_surface(pic, 0, 0)
+    ctx.paint()
+    if name > 0:
+        ctx.set_operator(cairo.OPERATOR_ADD)
+        ctx.set_source_surface(pic, 0, 0)
+        ctx.paint_with_alpha(0.6 * name)
+    ctx.restore()
+    phosphenes(ctx, cx, cy, 430, t, a=0.3 + 0.3 * name, kind="dots", base=False)
     mini_tag(ctx, "LUZ REAL: 0", 800, 690, 640, 590, appear(t, w(s_phos, "existe"), 0.4), col=WHITE)
     if name > 0:
         s = ease_out_back(name)

@@ -20,7 +20,7 @@
 | 10,3-13,4 | Sus neuronas se disparan como si les llegara luz. | disparan | Zoom a las capas de la retina: fotorreceptores, bipolares y ganglionares. El tejido se estira y las ganglionares se disparan cada vez más rápido (con su «clic»); los impulsos salen por sus fibras. | NEURONAS · SEÑAL DE LA RETINA (barra que se llena) |
 | 13,4-16,9 | Luego mandan la señal por el nervio óptico al cerebro. | nervio | **Foto (Flow):** cabeza translúcida de perfil con el cerebro rosa. Los impulsos recorren el nervio amarillo de la foto y la parte de atrás del cerebro se enciende. | NERVIO ÓPTICO · CEREBRO |
 | 16,9-20,6 | Para tu cerebro, todo lo que llega por ese nervio es luz. | luz | Dos filas iguales: bombilla → ojo → impulsos → cerebro, y dedo → ojo → los mismos impulsos → cerebro. «=» entre ellas; las dos acaban en «LUZ». | LUZ DE VERDAD · PRESIÓN · LUZ = LUZ |
-| 20,6-23,5 | Ves luz que no existe: se llaman fosfenos. | fosfenos | Fosfenos a pantalla completa. | LUZ REAL: 0 · FOSFENOS · DEL GRIEGO «LUZ» + «MOSTRAR» |
+| 20,6-23,5 | Ves luz que no existe: se llaman fosfenos. | fosfenos | **Foto (Flow):** damero de fosfenos a pantalla completa, girando despacio con chispas; en «fosfenos» crece y se enciende. | LUZ REAL: 0 · FOSFENOS · DEL GRIEGO «LUZ» + «MOSTRAR» |
 | 23,5-27,4 | Newton se metió un punzón entre el ojo y el hueso para verlos. | punzón | **Foto (Flow):** retrato de Newton hasta «punzón»; se acerca, se funde y deja paso al cuaderno dibujado (el ojo y el borde de la órbita a tinta, el punzón entrando entre los dos y, en «verlos», anillos de colores). | ISAAC NEWTON · CUADERNO DE NEWTON · PUNZÓN |
 | 27,4-31,6 | Cuéntame: ¿qué ves tú, puntos, rayas o colores? | colores | Tres círculos (puntos, rayas, manchas de color) que se encienden al nombrarlos. | PUNTOS · RAYAS · COLORES |
 
@@ -34,7 +34,7 @@ Están en `video/assets/ojos-colores/`. Solo van en las escenas donde una imagen
 |---|---|---|
 | 1 | `escena-01-ojo.jpg` | Usada. Baja 200 px para que el humo de colores no quede bajo los subtítulos; arriba se funde con su color. |
 | 5 | `escena-05-cerebro.jpg` | Usada. Los impulsos recorren el nervio de la propia foto (medido sobre ella). |
-| 7 | fosfenos (damero) | Pendiente: llegó solo como vista previa y no como archivo. Por ahora van mis fosfenos animados. |
+| 7 | `escena-07-fosfenos.jpg` | Usada la del damero. La otra versión (cuadrados translúcidos) parecía una interfaz, no lo que se ve con los ojos cerrados. |
 | 8 | `escena-08-newton.jpg` | Usada la versión sin vela (la otra tenía la vela cortada en el borde). Arriba tiene una costura de relleno que queda tapada con un fundido. |
 | 8 | cuaderno | Descartada: el punzón atraviesa la pupila y la voz dice «entre el ojo y el hueso». Además tenía letras falsas casi legibles. Se queda el cuaderno dibujado. |
 
