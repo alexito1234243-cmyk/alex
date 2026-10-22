@@ -30,6 +30,32 @@ Voz comprobada con Whisper:
 - «Enzo» no se dice: Santa se traga la E y salía «en Sof». Su nombre va escrito en pantalla.
 - La frase de la respuesta empieza por «Muy enfadado» porque, con «El dueño…», Santa se comía el «El». Además lo dice su relato: «Il Commendatore se puso furioso».
 
+## Imágenes con IA (bloque pasado al agente del usuario)
+
+El usuario pidió probar a fondo lo que puede hacer la IA, así que hay una imagen por escena. La escena 6 (Enzo y Ferruccio) va como cuadro pintado y marcada «RECREACIÓN» en pantalla: una foto realista de dos personas reales sería una foto falsa. Se pide «sin logos» porque la IA deforma los escudos; los coches se reconocen por la forma y el color.
+
+```
+Genera estas imágenes con flow_generate_image. Formato 9:16, modelo pro, 2 versiones de cada una (count 2). Guárdalas en una carpeta llamada "lamborghini" y renómbralas con el nombre que pongo delante de cada prompt, añadiendo -a y -b a cada versión (por ejemplo escena-01-a.png). No cambies los prompts y genéralas una detrás de otra.
+
+escena-01: Cinematic night shot, low angle on wet asphalt: a glossy red 1960s Italian grand tourer and a yellow modern wedge-shaped Italian supercar face each other nose to nose, a bright electric spark crackling between their front bumpers, headlights glaring, rain reflections, smoke, intense rivalry mood. Cars in the lower-middle of the frame, top quarter dark and empty. Photorealistic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
+
+escena-02: Golden-hour countryside in northern Italy, late 1940s: a row of brand-new blue tractors lined up outside a small brick workshop, a man in work overalls seen from behind proudly looking at them, dust in the warm light, ploughed fields behind. Tractors in the middle of the frame, top quarter is darkening sky. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no watermark.
+
+escena-03: Wealthy 1960s private garage at night: three glossy red 1960s Italian grand tourers parked side by side under warm hanging lamps, polished concrete floor with reflections, luxurious and moody. Cars in the middle of the frame, top quarter dark and empty. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
+
+escena-04: Dusk on a 1960s Italian country road: a red 1960s grand tourer stopped on the roadside with thick grey smoke rising from underneath the car, the driver door open, an annoyed man in a suit standing next to it with hands on his hips, seen from behind. Car in the middle of the frame, top quarter dark sky. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
+
+escena-05: 1960s Italian sports car factory entrance at dusk, red brick building with tall windows glowing yellow, a red grand tourer parked at the gate, a man in a suit walking angrily towards the door, seen from behind. Building in the middle of the frame, top quarter dark sky. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no signs, no watermark.
+
+escena-06: Dramatic oil painting in chiaroscuro, 1960s office: an older man in dark sunglasses sitting behind a large wooden desk, dismissively pointing towards the door, while a younger man in a suit stands in front of the desk, fists clenched, furious. Warm lamp light, dark background. Figures in the middle of the frame, top quarter dark and empty. Painterly, visible brushstrokes, clearly an illustration, vertical 9:16, no text, no letters, no logos, no watermark.
+
+escena-07: Dark workshop in the early 1960s: technical blueprints of a sports car pinned on a drafting table in the foreground, and behind them a brand-new yellow 1960s grand tourer revealed under a single strong spotlight, dust floating in the beam. Car in the middle of the frame, top quarter dark and empty. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
+
+escena-08: A powerful black fighting bull charging straight at the camera through golden dust at sunset, low angle, muscles and horns in sharp detail, and above it in the dark sky the Taurus constellation glowing faintly with thin golden lines between the stars. Bull in the middle of the frame, top quarter dark sky. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no watermark.
+
+escena-09: Night, front view, low angle: a red 1960s Italian grand tourer and a yellow modern wedge-shaped Italian supercar parked side by side facing the camera, headlights on, wet asphalt reflecting red and yellow light, epic showdown. Cars in the lower-middle of the frame, top quarter dark and empty. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
+```
+
 ## Texto del post (2 líneas, sin hashtags)
 
 ¿Sabías que Lamborghini nació por un insulto de Ferrari? 🏎️
