@@ -16,6 +16,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
   Los efectos pueden ir un poco después de una palabra: `("@disparan+0.3", "tick")`.
   El gancho, el cerebro, los fosfenos y el retrato de Newton son imágenes de Flow (`video/assets/ojos-colores/`) que se pintan de fondo con `Still` y `clip_bg` (`rich.py`).
 - `lamborghini_ferrari.py`: ¿sabías que Lamborghini nació por un insulto de Ferrari? (tema 25, marcas famosas). Una imagen de Flow por escena (`video/assets/lamborghini-ferrari/`) con etiquetas sobre píldoras, bocadillos de cómic, lupa del embrague y zonas de la foto que se encienden con `light_up`; guion, imágenes descartadas y fuentes en `video/out/lamborghini-ferrari/guion.md`.
+- `lamborghini_estilo.py`: el mismo vídeo de Lamborghini con imágenes de Flow en el estilo de los dibujos (referencia de estilo de la skill), para comparar con la versión de fotos → `video/out/lamborghini-ferrari-estilo/`.
 - `piezas.py`: fondo técnico, etiquetas, panel de datos y móvil compartidos por los vídeos de estilo técnico.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 

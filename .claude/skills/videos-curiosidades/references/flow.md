@@ -75,5 +75,7 @@ Lo que ya ha pasado con las imágenes de Flow:
 - **Coches que se parecen a modelos concretos.** «Italian grand tourer» sale casi siempre con forma de Ferrari (un 275 GTB amarillo). No lo etiquetes como otro modelo.
 - **Menos resolución.** A veces llegan a 768×1376. Se escalan con lanczos y nitidez (`Still`), pero se ven algo blandas. Pide el modelo pro y avisa al usuario.
 - **Escenas con personas reales.** Pídelas como cuadro pintado y marca la escena «RECREACIÓN».
+- **La referencia copiada entera.** Con `@{estilo}`, una versión puede calcar la imagen de referencia (los coches, el embrague, el ojo y el tractor juntos). Descártala: la otra versión suele valer.
+- **Coches de otra marca colados.** En un garaje de «Ferrari» salió un Lamborghini Miura. Si no se puede descartar la imagen, déjalo en penumbra y enciende solo lo que dice la voz.
 - **Un zip con imágenes viejas.** El agente guardó en la carpeta del lote anterior y no regeneró las escenas cuyos nombres ya existían: solo creó copias `_2` de algunas. Antes de revisar, compara cada imagen con el lote anterior (diferencia media de píxeles con PIL). En el bloque, pide siempre una carpeta nueva y vacía.
 7. **Apúntalo en `guion.md`**: qué imagen va en cada escena y qué se descartó.
