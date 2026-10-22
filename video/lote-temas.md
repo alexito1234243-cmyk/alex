@@ -23,6 +23,32 @@ La puntuación es una estimación, no un dato. Fiabilidad: [Cierto] = dato conoc
 
 Serie «Misterios del avión»: 1, 3, 7 y 11. Es lo único que te ha funcionado (3.059 personas y 6 seguidores).
 
+## Lote 2 — Marcas famosas (22-10-2026)
+
+Banco propuesto por otro asistente, con puntuaciones que no se basan en datos, y verificado aquí. Los errores están corregidos y lo que es una anécdota está marcado. Encajan mejor con «Por eso es así» los «¿por qué [algo que has visto]?» (16, 18, 21, 31 y 32) que las historias de origen.
+
+| # | Marca | Gancho | Dato | Estado | Fuente |
+|---|---|---|---|---|---|
+| 16 | Apple | «¿Por qué en los anuncios del iPhone siempre son las 9:41?» | Jobs presentó el primer iPhone hacia el minuto 41 de la keynote de 2007 y prepararon la hora para que coincidiera. Las 10:09 son del Apple Watch, y su motivo no está documentado. | Corregido: el original decía «las 10:09 en todos los anuncios» | [SlashGear](https://www.slashgear.com/1454887/why-apple-ads-always-display-same-time) |
+| 17 | Apple | «¿Sabías que en las películas los malos nunca usan iPhone?» | Lo contó Rian Johnson, director de *Puñales por la espalda* (Vanity Fair, 2020). Apple nunca lo ha confirmado: decirlo como «según un director». | Matizar | [Engadget](https://engadget.com/2020/02/26/rian-johnson-apple-movie-villains-use-iphones-on-came) |
+| 18 | Apple | «¿Por qué la manzana de Apple tiene un mordisco?» | Su diseñador, Rob Janoff, contó que era para que se viera como una manzana y no como una cereza; lo de bite/byte fue casualidad. | [VERIFICAR] fuente primaria | — |
+| 19 | Tesla | «¿Sabías que tu Tesla se puede tirar pedos?» | Es un modo real del menú de juguetes de la pantalla («Emissions Testing Mode»). | Cierto | — |
+| 20 | Tesla | «Hay un Tesla dando vueltas alrededor del Sol» | El Roadster de Musk que lanzó el Falcon Heavy en febrero de 2018. | Cierto | — |
+| 21 | Tesla | «¿Por qué las puertas del Model X no se dan contra el techo?» | Llevan sensores que miden el hueco antes de abrirse hacia arriba. | Cierto | — |
+| 22 | Samsung | «¿Sabías que Samsung empezó vendiendo fideos?» | En 1938, en Daegu, era una empresa de comercio con fideos propios. Lo del pescado seco no lo he podido confirmar. | Fideos: cierto · pescado: [VERIFICAR] | Museo de Historia Moderna de Daegu |
+| 23 | Samsung | «El edificio más alto del mundo lo construyó… ¿Samsung?» | La constructora Samsung C&T fue la contratista principal del Burj Khalifa, en consorcio con BESIX y Arabtec. | Cierto (decir «la constructora de Samsung») | Middle East Construction News |
+| 24 | Samsung | «¿Sabías que la pantalla de tu iPhone muchas veces la fabrica Samsung?» | Samsung Display hizo alrededor del 57 % de las pantallas de iPhone en 2025; el resto, LG y BOE. | Matizar: «muchas veces», no «siempre» | Omdia, vía Digitimes |
+| 25 | Lamborghini | «¿Sabías que Lamborghini nació porque Ferrari insultó a un fabricante de tractores?» | Anécdota que contaba el propio Ferruccio. Las versiones (el embrague, la frase de Enzo) cambian y no hay fuente oficial: contarlo como «según contaba él». La mejor historia del lote. | Anécdota | [Jalopnik](https://jalopnik.com/1759745487) · [Lambocars](https://www.lambocars.com/ferruccio-lamborghini-a-biography/) |
+| 26 | Lamborghini | «Los tractores Lamborghini siguen existiendo… pero no son de Lamborghini» | Desde 1973 son otra empresa (hoy del grupo SDF); los coches son de Audi. | Corregido: el original decía «misma marca» | [Wikipedia](https://en.wikipedia.org/wiki/Lamborghini_Trattori) |
+| 27 | Lamborghini | «¿Por qué el logo de Lamborghini es un toro?» | Ferruccio era Tauro y le apasionaban los toros de lidia. | Cierto | — |
+| 28 | Nike | «El logo de Nike costó 35 dólares» | Carolyn Davidson, 1971. Años después le dieron acciones. | Cierto | — |
+| 29 | Nintendo | «Nintendo vendía cartas casi 100 años antes que Mario» | Naipes hanafuda desde 1889; Mario sale en 1981, 92 años después. | Corregido: «casi 100», no «100» | — |
+| 30 | Adidas y Puma | «Adidas y Puma nacieron de dos hermanos que dejaron de hablarse» | Los hermanos Dassler se separaron en 1948. | Cierto | — |
+| 31 | Coca-Cola | «¿Por qué la botella de Coca-Cola tiene esa forma?» | El encargo de 1915 pedía reconocerla al tacto, a oscuras y hasta rota. La propia Coca-Cola lo cuenta sin lo de «a oscuras y rota». | Probable | [Coca-Cola](https://www.coca-colacompany.com/about-us/history/the-history-of-the-coca-cola-contour-bottle) |
+| 32 | BMW | «El logo de BMW no es una hélice» | Viene del logo de Rapp y de los colores de Baviera. El mito nació de un anuncio de BMW de 1929, y la propia BMW lo desmiente. | Cierto | [Creative Bloq](https://www.creativebloq.com/news/bmw-logo-explained) |
+
+En estos vídeos no se copian logos ni anuncios: se dibuja el producto o se insinúa (un móvil con las 9:41, la silueta de un toro).
+
 ---
 
 ## Guía de estilo para Flow (clips de fondo; encima van voz, subtítulos, etiquetas y datos)

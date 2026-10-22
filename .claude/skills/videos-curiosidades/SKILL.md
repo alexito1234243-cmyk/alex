@@ -23,6 +23,12 @@ Vídeos faceless de UNA curiosidad cotidiana, con dibujos animados por código, 
 
 Elige un tema que el 100 % de la gente haya vivido sin entenderlo (avión, coche, cocina, cuerpo, casa, móvil) y que tenga un giro. Evita como tema principal los componentes por dentro que nadie ha visto (chips, sensores): rindieron poco.
 
+**Marcas famosas** (lote 2 de `video/lote-temas.md`):
+- Encajan mejor los «¿por qué [algo que has visto de esa marca]?» que las historias de origen.
+- Las anécdotas sin fuente oficial se cuentan como «según contaba…».
+- No copies logos ni anuncios: dibuja el producto o insinúalo.
+- Si te llega un banco de temas de otro asistente, verifícalo entero. El primero que llegó traía un dato falso y otro engañoso, y sus puntuaciones no salían de ningún dato.
+
 Verifica cada afirmación con una búsqueda web antes de escribir el guion y apunta la fuente. Lo que no puedas confirmar va marcado como [VERIFICAR] o fuera del guion. Si una fecha o una cifra se discute, no la digas. Las barras y los contadores «ilustrativos» van sin números: un número en pantalla se lee como un dato.
 
 ### 2. Tres ganchos
