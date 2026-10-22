@@ -227,6 +227,57 @@ def cta_button(ctx, t, cx=540, cy=900):
         ctx.restore()
 
 
+# ---------- clips de vídeo (Flow u otro generador) ----------
+
+class Clip:
+    """Clip de vídeo usado como fondo de una escena: se recorta a 9:16 (sin deformar) y se lee en orden.
+    Si se pide un instante pasado el final, se queda en el último fotograma."""
+
+    def __init__(self, path, start=0.0):
+        self.path, self.start = path, start
+        self.proc, self.next, self.surf, self.data = None, 0, None, None
+
+    def _open(self, idx):
+        if self.proc:
+            self.proc.kill()
+        self.proc = subprocess.Popen([
+            "ffmpeg", "-loglevel", "error", "-ss", f"{self.start + idx / FPS:.3f}", "-i", self.path, "-an",
+            "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H},fps={FPS}",
+            "-f", "rawvideo", "-pix_fmt", "bgra", "-"], stdout=subprocess.PIPE, stderr=subprocess.DEVNULL)
+        self.next = idx
+
+    def _read(self):
+        buf = self.proc.stdout.read(W * H * 4)
+        if len(buf) < W * H * 4:
+            return False
+        self.data = bytearray(buf)
+        self.surf = cairo.ImageSurface.create_for_data(self.data, cairo.FORMAT_ARGB32, W, H, W * 4)
+        self.next += 1
+        return True
+
+    def frame(self, t):
+        idx = max(0, int(round(t * FPS)))
+        if self.proc is None or idx < self.next - 1 or idx > self.next + 90:
+            self._open(idx)
+        while self.next <= idx and self._read():
+            pass
+        return self.surf
+
+
+def clip_bg(ctx, clip, t, dim=0.25):
+    """Pinta el fotograma del clip como fondo y lo oscurece un poco para que se lean etiquetas y subtítulos."""
+    surf = clip.frame(t)
+    if surf is None:
+        ctx.set_source_rgb(0.02, 0.02, 0.03)
+        ctx.paint()
+        return
+    ctx.set_source_surface(surf, 0, 0)
+    ctx.paint()
+    if dim > 0:
+        ctx.set_source_rgba(0, 0, 0, dim)
+        ctx.paint()
+
+
 # ---------- escenas ----------
 
 @dataclass
