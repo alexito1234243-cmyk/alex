@@ -227,7 +227,7 @@ def cta_button(ctx, t, cx=540, cy=900):
         ctx.restore()
 
 
-# ---------- clips de vídeo (Flow u otro generador) ----------
+# ---------- clips de vídeo e imágenes (Flow u otro generador) ----------
 
 class Clip:
     """Clip de vídeo usado como fondo de una escena: se recorta a 9:16 (sin deformar) y se lee en orden.
@@ -264,14 +264,30 @@ class Clip:
         return self.surf
 
 
-def clip_bg(ctx, clip, t, dim=0.25):
-    """Pinta el fotograma del clip como fondo y lo oscurece un poco para que se lean etiquetas y subtítulos."""
+class Still:
+    """Imagen fija usada como fondo de una escena (misma interfaz que Clip): se recorta a 9:16 sin deformar."""
+
+    def __init__(self, path):
+        raw = subprocess.run([
+            "ffmpeg", "-loglevel", "error", "-i", path,
+            "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}",
+            "-f", "rawvideo", "-pix_fmt", "bgra", "-"], capture_output=True, check=True).stdout
+        self.data = bytearray(raw)
+        self.surf = cairo.ImageSurface.create_for_data(self.data, cairo.FORMAT_ARGB32, W, H, W * 4)
+
+    def frame(self, t):
+        return self.surf
+
+
+def clip_bg(ctx, clip, t, dim=0.25, dy=0):
+    """Pinta el fotograma del clip (o la imagen) como fondo, bajado dy píxeles si hace falta dejar sitio
+    arriba, y lo oscurece un poco para que se lean etiquetas y subtítulos."""
     surf = clip.frame(t)
     if surf is None:
         ctx.set_source_rgb(0.02, 0.02, 0.03)
         ctx.paint()
         return
-    ctx.set_source_surface(surf, 0, 0)
+    ctx.set_source_surface(surf, 0, dy)
     ctx.paint()
     if dim > 0:
         ctx.set_source_rgba(0, 0, 0, dim)

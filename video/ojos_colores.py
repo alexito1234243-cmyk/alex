@@ -2,7 +2,8 @@
 
 Gancho con la experiencia que todos han vivido, giro («no es luz»), el mecanismo en 4 pasos
 (apretar → la retina se estira → sus neuronas se disparan → el cerebro lo lee como luz), el dato
-de Newton y una pregunta fácil de contestar al final.
+de Newton y una pregunta fácil de contestar al final. El gancho, la cabeza con el nervio óptico y el
+retrato de Newton son imágenes generadas con Flow (video/assets/ojos-colores/); el resto está dibujado.
 
 Datos y fuentes:
 - Fosfeno (del griego phôs, «luz», y phainein, «mostrar»): ver luz sin que entre luz en el ojo. Los más
@@ -31,7 +32,7 @@ import cairo
 
 from engine import clamp, ease_in_out, ease_out_back
 from piezas import CYAN, GREEN, ORANGE, RED, WHITE, appear, mini_tag, panel, spaced, tech_bg
-from rich import (TOP_SHORT, YELLOW, Scene, bezier, disc, fill_rr, glow, linear, mul, poly, preview, radial, render,
+from rich import (TOP_SHORT, YELLOW, Scene, Still, bezier, clip_bg, disc, fill_rr, glow, linear, mul, poly, preview, radial, render,
                   rgba, rr, soft_ellipse, source, stroke, text, word_time)
 
 SKIN = (0.88, 0.66, 0.54)
@@ -63,13 +64,15 @@ BLOBS = [(_r.uniform(0.4, 1.0), _r.uniform(0.4, 1.0), _r.uniform(0, 6.3), _r.uni
 SPARKS = [(_r.uniform(0, 6.3), math.sqrt(_r.random()), _r.uniform(0, 6.3), _r.uniform(2, 5)) for _ in range(70)]
 
 
-def phosphenes(ctx, cx, cy, R, t, a=1.0, kind="mix", burst=0.0):
+def phosphenes(ctx, cx, cy, R, t, a=1.0, kind="mix", burst=0.0, base=True):
     """Lo que se ve al frotarse los ojos: manchas de color, un damero que gira, anillos y chispas.
-    kind: "mix" (todo), "dots" (puntos), "stripes" (rayas) o "colors" (manchas de color)."""
+    kind: "mix" (todo), "dots" (puntos), "stripes" (rayas) o "colors" (manchas de color).
+    base=False los pinta sin fondo oscuro, encima de una foto."""
     if a <= 0:
         return
     ctx.push_group()
-    disc(ctx, cx, cy, R, (0.015, 0.012, 0.03))
+    if base:
+        disc(ctx, cx, cy, R, (0.015, 0.012, 0.03))
     ctx.set_operator(cairo.OPERATOR_ADD)
     if kind == "mix":  # damero en anillos que giran en sentidos alternos
         for i in range(5):
@@ -133,32 +136,6 @@ def finger(ctx, x, y, ang, length=520, s=1.0):
     fill_rr(ctx, 2, -50, 122, 58, 26, linear(0, -50, 0, 8, [(0, (0.99, 0.88, 0.84)), (1, (0.90, 0.72, 0.66))]))  # uña
     for kx in (200, 222):  # pliegue del nudillo
         stroke(ctx, [(kx, -44), (kx + 6, 34)], rgba(mul(SKIN, 0.68), 0.7), 4)
-    ctx.restore()
-
-
-def closed_eye(ctx, x, y, s, t, rub=0.0):
-    """Ojo cerrado visto de frente, con un dedo que lo frota en círculos."""
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    ctx.save()
-    ctx.scale(1.0, 0.68)
-    disc(ctx, 0, 0, 380, radial(0, 0, 380, [(0, SKIN), (0.6, mul(SKIN, 0.86)), (1, rgba(mul(SKIN, 0.55), 0))]))
-    ctx.restore()
-    stroke(ctx, bezier((-215, -122), (-120, -196), (80, -200), (222, -128)), (0.26, 0.16, 0.11), 30)  # ceja
-    crease = bezier((-178, -22), (-92, -104), (92, -104), (182, -18))
-    lid = bezier((-196, 8), (-96, 74), (96, 74), (196, 4))
-    poly(ctx, crease + lid[::-1], linear(0, -100, 0, 74, [(0, mul(SKIN, 1.06)), (1, mul(SKIN, 0.9))]))
-    stroke(ctx, crease, rgba(mul(SKIN, 0.66), 0.85), 6, close=False)
-    stroke(ctx, lid, (0.24, 0.12, 0.09), 9, close=False)
-    for k in range(3, 22):  # pestañas, abiertas en abanico
-        px, py = lid[k]
-        ang = math.pi / 2 + (k / 24 - 0.5) * 1.3
-        stroke(ctx, bezier((px, py), (px + 14 * math.cos(ang), py + 14 * math.sin(ang)),
-                           (px + 26 * math.cos(ang - 0.25), py + 26 * math.sin(ang - 0.25)),
-                           (px + 34 * math.cos(ang - 0.45), py + 34 * math.sin(ang - 0.45)), 6),
-               (0.16, 0.09, 0.07), 4, close=False)
-    finger(ctx, 80 + rub * 26 * math.cos(t * 9), 14 + rub * 16 * math.sin(t * 9), 0.62)
     ctx.restore()
 
 
@@ -321,36 +298,69 @@ def brain(ctx, x, y, s, t, lit=0.0, back_lit=0.0):
     ctx.restore()
 
 
-def head_path(ctx):
-    """Silueta de una cabeza de perfil mirando a la izquierda."""
-    ctx.new_path()
-    ctx.move_to(720, 1620)
-    ctx.curve_to(730, 1460, 780, 1380, 840, 1280)
-    ctx.curve_to(935, 1130, 925, 820, 805, 700)
-    ctx.curve_to(690, 588, 470, 556, 360, 640)
-    ctx.curve_to(290, 690, 262, 770, 264, 840)
-    ctx.curve_to(264, 880, 252, 900, 237, 925)
-    ctx.curve_to(217, 960, 180, 1010, 190, 1036)
-    ctx.curve_to(200, 1060, 240, 1062, 252, 1070)
-    ctx.curve_to(246, 1100, 240, 1120, 254, 1136)
-    ctx.curve_to(246, 1160, 250, 1180, 262, 1196)
-    ctx.curve_to(260, 1240, 280, 1282, 342, 1296)
-    ctx.curve_to(420, 1306, 470, 1330, 480, 1400)
-    ctx.line_to(470, 1620)
-    ctx.close_path()
+# ---------- fotos (generadas con Flow / Nano Banana) ----------
+
+ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "ojos-colores")
+HOOK_DY = 200  # la foto del gancho baja para que sus colores no queden bajo los subtítulos
+HOOK_TOP = (0.024, 0.046, 0.077)  # color de la parte de arriba de esa foto
+SWIRL = (545, 445 + HOOK_DY)  # centro de los colores de esa foto
+NEWTON_TOP = (0.051, 0.037, 0.025)
+# el nervio amarillo de la foto del cerebro, medido sobre ella (coordenadas de pantalla)
+NERVE_PTS = [(339, 1069), (387, 1069), (435, 1061), (484, 1035), (532, 991), (581, 973), (629, 974), (677, 989),
+             (726, 1004), (774, 1006), (810, 975), (840, 930)]
+BRAIN_SPOT = (845, 925)  # la zona de la vista, al fondo del cerebro
 
 
-OPTIC = bezier((318, 905), (430, 965), (640, 990), (792, 880))
+@functools.lru_cache(maxsize=None)
+def photo(name):
+    return Still(os.path.join(ASSETS, name))
+
+
+def along(pts, u):
+    """Punto a una fracción u (0-1) del recorrido de una polilínea."""
+    segs = [math.hypot(b[0] - a[0], b[1] - a[1]) for a, b in zip(pts, pts[1:])]
+    d = clamp(u) * sum(segs)
+    for (a, b), L in zip(zip(pts, pts[1:]), segs):
+        if d <= L:
+            f = d / L
+            return a[0] + (b[0] - a[0]) * f, a[1] + (b[1] - a[1]) * f
+        d -= L
+    return pts[-1]
+
+
+def swirl(ctx, t, k):
+    """Aviva los colores de la foto del gancho: los vuelve a pintar encima sumando luz y girando despacio."""
+    if k <= 0:
+        return
+    cx, cy = SWIRL
+    ctx.save()
+    ctx.set_operator(cairo.OPERATOR_ADD)
+    ctx.translate(cx, cy)
+    ctx.rotate(0.22 * math.sin(t * 1.3))
+    ctx.scale(1 + 0.05 * math.sin(t * 2.1), 1 + 0.05 * math.sin(t * 2.1))
+    ctx.translate(-cx, -cy)
+    ctx.set_source_surface(photo("escena-01-ojo.jpg").frame(t), 0, HOOK_DY)
+    ctx.mask(radial(cx, cy, 340, [(0, (0, 0, 0, k)), (0.7, (0, 0, 0, k)), (1, (0, 0, 0, 0))]))
+    ctx.restore()
+
+
+def fade_top(ctx, col, y0, y1):
+    """Funde la parte de arriba de una foto con un color liso (tapa costuras y deja sitio a los subtítulos)."""
+    ctx.rectangle(0, 0, 1080, y1)
+    ctx.set_source(linear(0, y0, 0, y1, [(0, col), (1, rgba(col, 0))]))
+    ctx.fill()
 
 
 # ---------- escenas ----------
 
 def s_hook(ctx, t):
-    tech_bg(ctx, t)
     burst = ease_out_back(appear(t, w(s_hook, "colores"), 0.5))
-    rub = clamp(t / 0.4)
-    phosphenes(ctx, 540, 900, 380 + 40 * burst, t, a=0.8 + 0.2 * burst, burst=burst)
-    closed_eye(ctx, 520, 1470, 0.95, t, rub=rub)
+    source(ctx, HOOK_TOP)
+    ctx.paint()
+    clip_bg(ctx, photo("escena-01-ojo.jpg"), t, dim=0.0, dy=HOOK_DY)
+    fade_top(ctx, HOOK_TOP, HOOK_DY - 10, HOOK_DY + 200)
+    swirl(ctx, t, 0.45 + 0.75 * burst)
+    phosphenes(ctx, *SWIRL, 300, t, a=0.25 + 0.45 * burst, kind="dots", base=False)
 
 
 def s_dark(ctx, t):
@@ -461,27 +471,19 @@ def s_neurons(ctx, t):
 
 
 def s_nerve(ctx, t):
-    tech_bg(ctx, t)
-    head_path(ctx)
-    ctx.set_source(linear(200, 600, 900, 1500, [(0, (0.12, 0.14, 0.24)), (1, (0.05, 0.06, 0.11))]))
-    ctx.fill_preserve()
-    source(ctx, rgba(CYAN, 0.45))
-    ctx.set_line_width(4)
-    ctx.stroke()
+    clip_bg(ctx, photo("escena-05-cerebro.jpg"), t, dim=0.0)
     arrive = appear(t, w(s_nerve, "cerebro"), 0.5)
-    brain(ctx, 600, 800, 2.0, t, back_lit=arrive)
-    stroke(ctx, OPTIC, rgba(NERVE, 0.85), 16, close=False)
-    eye_icon(ctx, 318, 905, 0.42)
     go = appear(t, w(s_nerve, "señal") - 0.2, 0.3)
-    if go > 0:
+    if go > 0:  # los impulsos recorren el nervio de la foto
         for k in range(4):
-            u = ((t - w(s_nerve, "señal")) * 0.9 + k / 4) % 1
-            px, py = OPTIC[int(u * (len(OPTIC) - 1))]
+            px, py = along(NERVE_PTS, ((t - w(s_nerve, "señal")) * 0.9 + k / 4) % 1)
             glow(ctx, px, py, 46, YELLOW, 0.9 * go, add=True)
             disc(ctx, px, py, 10, (1, 1, 0.85, go))
-    nx, ny = OPTIC[9]
-    mini_tag(ctx, "NERVIO ÓPTICO", nx, ny + 12, 560, 1430, appear(t, w(s_nerve, "nervio"), 0.4), col=NERVE)
-    mini_tag(ctx, "CEREBRO", 790, 760, 700, 590, arrive, col=YELLOW)
+    if arrive > 0:
+        glow(ctx, *BRAIN_SPOT, 170, YELLOW, 0.7 * arrive * (0.75 + 0.25 * math.sin(t * 9)), add=True)
+    nx, ny = along(NERVE_PTS, 0.4)
+    mini_tag(ctx, "NERVIO ÓPTICO", nx, ny + 10, 560, 1300, appear(t, w(s_nerve, "nervio"), 0.4), col=NERVE)
+    mini_tag(ctx, "CEREBRO", BRAIN_SPOT[0], BRAIN_SPOT[1] - 30, 760, 520, arrive, col=YELLOW)
 
 
 def channel(ctx, t, y, label, col, src, out_p, t_on):
@@ -537,9 +539,9 @@ def s_phos(ctx, t):
         spaced(ctx, "DEL GRIEGO «LUZ» + «MOSTRAR»", 540, 1580, 24, col=(1, 1, 1, 0.7 * clamp(name * 2 - 1)), anchor="center")
 
 
-def s_newton(ctx, t):
-    tech_bg(ctx, t)
-    spaced(ctx, "CUADERNO DE NEWTON", 540, 560, 30, col=(1, 1, 1, 0.8 * appear(t, 0.1, 0.4)), anchor="center")
+def notebook(ctx, pz, rings, t):
+    """Página del cuaderno: el ojo y el borde de la órbita a tinta, el punzón (pz: cuánto ha entrado) entre
+    los dos y los anillos de colores que vio. Devuelve un punto del punzón para la etiqueta."""
     ctx.save()
     ctx.translate(540, 1060)
     ctx.rotate(-0.035)
@@ -556,28 +558,24 @@ def s_newton(ctx, t):
         x1 = rng.uniform(150, 340)
         pts = [(xx, yy + 4 * math.sin(xx / 9 + rng.random() * 6)) for xx in range(-340, int(x1), 6)]
         stroke(ctx, pts, rgba(INK, 0.45), 3, close=False)
-    draw = clamp(t / 1.1)
     ctx.new_sub_path()
-    ctx.arc(-40, 0, 150, math.pi, math.pi + 2 * math.pi * draw)
+    ctx.arc(-40, 0, 150, 0, 2 * math.pi)
     source(ctx, INK)
     ctx.set_line_width(5)
     ctx.stroke()
-    if draw > 0.6:
-        ctx.new_sub_path()
-        ctx.arc(-150, 0, 80, math.pi - 1.0, math.pi + 1.0)
-        ctx.stroke()
-        disc(ctx, -218, 0, 15, INK)
+    ctx.new_sub_path()
+    ctx.arc(-150, 0, 80, math.pi - 1.0, math.pi + 1.0)
+    ctx.stroke()
+    disc(ctx, -218, 0, 15, INK)
     bone = bezier((60, -280), (240, -220), (270, 80), (215, 230), 30)  # borde de la órbita
-    stroke(ctx, bone[: max(2, int(len(bone) * draw))], INK, 9, close=False)
+    stroke(ctx, bone, INK, 9, close=False)
     for k in range(2, 30, 4):  # rayado del hueso
         bx, by = bone[k]
         stroke(ctx, [(bx, by), (bx + 26, by + 14)], rgba(INK, 0.6), 3, close=False)
-    pz = ease_in_out(appear(t, w(s_newton, "punzón") - 0.15, 0.7))
     bodkin = bezier((330, 430), (250, 330), (170, 200), (130, 40), 30)  # entra entre el ojo y el hueso
     if pz > 0:
         stroke(ctx, bodkin[: max(2, int(len(bodkin) * pz))], INK, 6, close=False)
         stroke(ctx, [(330, 430), (292, 380)], INK, 22, close=False)  # mango
-    rings = appear(t, w(s_newton, "verlos"), 0.6)
     if rings > 0:  # los círculos de colores que vio, al otro lado del ojo
         for k, col in enumerate((PINK, CYAN, YELLOW)):
             r = (30 + 28 * k) * ease_out_back(rings)
@@ -588,8 +586,30 @@ def s_newton(ctx, t):
             ctx.stroke()
         glow(ctx, -255, 10, 140, WHITE, 0.25 * rings, add=True)
     ctx.restore()
-    bx, by = bodkin[12]
-    mini_tag(ctx, "PUNZÓN", 540 + bx, 1060 + by, 650, 1580, appear(t, w(s_newton, "punzón"), 0.4), col=YELLOW)
+    return 540 + bodkin[12][0], 1060 + bodkin[12][1]
+
+
+def s_newton(ctx, t):
+    """Primero su retrato (para que se le reconozca) y, al decir «punzón», su cuaderno."""
+    t_pz = w(s_newton, "punzón")
+    fade = ease_in_out(clamp((t - t_pz + 0.2) / 0.3))
+    tech_bg(ctx, t)
+    if fade > 0:
+        spaced(ctx, "CUADERNO DE NEWTON", 540, 560, 30, col=(1, 1, 1, 0.8 * fade), anchor="center")
+        bx, by = notebook(ctx, ease_in_out(appear(t, t_pz, 0.8)), appear(t, w(s_newton, "verlos"), 0.6), t)
+        mini_tag(ctx, "PUNZÓN", bx, by, 650, 1580, appear(t, t_pz + 0.3, 0.4), col=YELLOW)
+    if fade < 1:  # el retrato se acerca y se funde
+        ctx.push_group()
+        ctx.translate(540, 900)
+        ctx.scale(1 + 0.15 * fade, 1 + 0.15 * fade)
+        ctx.translate(-540, -900)
+        source(ctx, NEWTON_TOP)
+        ctx.paint()
+        clip_bg(ctx, photo("escena-08-newton.jpg"), t, dim=0.0)
+        fade_top(ctx, NEWTON_TOP, 430, 620)
+        spaced(ctx, "ISAAC NEWTON", 540, 1560, 44, col=YELLOW, anchor="center")
+        ctx.pop_group_to_source()
+        ctx.paint_with_alpha(1 - fade)
 
 
 def s_ask(ctx, t):

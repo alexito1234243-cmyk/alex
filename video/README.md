@@ -14,6 +14,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 - `auriculares.py`: tus auriculares quitan el ruido añadiendo más ruido (cancelación activa). Estilo `TOP_SHORT`; guion y fuentes en `video/out/auriculares/guion.md`.
 - `ojos_colores.py`: ¿por qué ves colores al frotarte los ojos? (fosfenos de presión, tema 12 del lote). Estilo `TOP_SHORT`; guion, prompts de Flow y fuentes en `video/out/ojos-colores/guion.md`.
   Los efectos pueden ir un poco después de una palabra: `("@disparan+0.3", "tick")`.
+  El gancho, el cerebro y el retrato de Newton son imágenes de Flow (`video/assets/ojos-colores/`) que se pintan de fondo con `Still` y `clip_bg` (`rich.py`).
 - `piezas.py`: fondo técnico, etiquetas, panel de datos y móvil compartidos por los vídeos de estilo técnico.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 

@@ -14,34 +14,38 @@
 
 | Tiempo | Voz (y subtítulo) | Palabra clave | Plano | Etiquetas y datos |
 |---|---|---|---|---|
-| 0,0-2,9 | ¿Por qué ves colores al frotarte los ojos? | colores | Ojo cerrado con un dedo que lo frota en círculos; encima, fosfenos (damero de colores que gira, manchas, anillos). En «colores» estallan. | — |
+| 0,0-2,9 | ¿Por qué ves colores al frotarte los ojos? | colores | **Foto (Flow):** primer plano de un ojo cerrado apretado con el dedo y, encima, humo de colores. Los colores de la foto giran despacio, con chispas, y se encienden en «colores». | — |
 | 2,9-6,8 | No es luz: pasa igual en una habitación a oscuras. | luz | Corte del ojo con una bombilla cuya luz llega a la retina. En «luz», una X roja corta los rayos; en «oscuras» se apaga la bombilla, todo se oscurece… y la retina se enciende de colores igual. | LUZ QUE ENTRA 0 % |
 | 6,8-10,3 | Cuando aprietas, el ojo se deforma y estira la retina. | retina | El dedo baja y hunde el globo ocular; flechas de estiramiento en la retina, que se ilumina donde más se estira. | PRESIÓN · RETINA |
 | 10,3-13,4 | Sus neuronas se disparan como si les llegara luz. | disparan | Zoom a las capas de la retina: fotorreceptores, bipolares y ganglionares. El tejido se estira y las ganglionares se disparan cada vez más rápido (con su «clic»); los impulsos salen por sus fibras. | NEURONAS · SEÑAL DE LA RETINA (barra que se llena) |
-| 13,4-16,9 | Luego mandan la señal por el nervio óptico al cerebro. | nervio | Cabeza de perfil; los impulsos viajan del ojo a la parte de atrás del cerebro, que se enciende. | NERVIO ÓPTICO · CEREBRO |
+| 13,4-16,9 | Luego mandan la señal por el nervio óptico al cerebro. | nervio | **Foto (Flow):** cabeza translúcida de perfil con el cerebro rosa. Los impulsos recorren el nervio amarillo de la foto y la parte de atrás del cerebro se enciende. | NERVIO ÓPTICO · CEREBRO |
 | 16,9-20,6 | Para tu cerebro, todo lo que llega por ese nervio es luz. | luz | Dos filas iguales: bombilla → ojo → impulsos → cerebro, y dedo → ojo → los mismos impulsos → cerebro. «=» entre ellas; las dos acaban en «LUZ». | LUZ DE VERDAD · PRESIÓN · LUZ = LUZ |
 | 20,6-23,5 | Ves luz que no existe: se llaman fosfenos. | fosfenos | Fosfenos a pantalla completa. | LUZ REAL: 0 · FOSFENOS · DEL GRIEGO «LUZ» + «MOSTRAR» |
-| 23,5-27,4 | Newton se metió un punzón entre el ojo y el hueso para verlos. | punzón | Página de cuaderno antiguo: se dibuja a tinta el ojo y el borde de la órbita; el punzón entra entre los dos; en «verlos» aparecen anillos de colores. | CUADERNO DE NEWTON · PUNZÓN |
+| 23,5-27,4 | Newton se metió un punzón entre el ojo y el hueso para verlos. | punzón | **Foto (Flow):** retrato de Newton hasta «punzón»; se acerca, se funde y deja paso al cuaderno dibujado (el ojo y el borde de la órbita a tinta, el punzón entrando entre los dos y, en «verlos», anillos de colores). | ISAAC NEWTON · CUADERNO DE NEWTON · PUNZÓN |
 | 27,4-31,6 | Cuéntame: ¿qué ves tú, puntos, rayas o colores? | colores | Tres círculos (puntos, rayas, manchas de color) que se encienden al nombrarlos. | PUNTOS · RAYAS · COLORES |
 
 Comprobado con Whisper sobre el audio final: se entiende todo. Dos avisos: Whisper escribe «Tus neuronas» (el whoosh del corte tapa un poco la «s»; el subtítulo dice «Sus») y «posfenos» (no conoce la palabra; en la frase suelta la transcribe bien).
 
-## Prompts para Flow (si quieres sustituir mis dibujos por planos generados)
+## Imágenes de Flow (Nano Banana)
 
-Uno por escena, en vertical 9:16, sin texto. Termina cada uno con el bloque de estilo de `video/lote-temas.md`:
-`clean 3D explainer render, dark navy background, soft studio rim light, subtle cyan accent light, macro detail, shallow depth of field, slow continuous camera move, vertical 9:16, no text, no letters, no logos, empty dark space in the top quarter of the frame`
+Están en `video/assets/ojos-colores/`. Solo van en las escenas donde una imagen real aporta algo. En las del mecanismo (ojo deformado, retina, «luz = presión»), la animación va sincronizada con la voz y la IA inventaría la anatomía.
 
-| # | Prompt |
+| Escena | Imagen | Decisión |
+|---|---|---|
+| 1 | `escena-01-ojo.jpg` | Usada. Baja 200 px para que el humo de colores no quede bajo los subtítulos; arriba se funde con su color. |
+| 5 | `escena-05-cerebro.jpg` | Usada. Los impulsos recorren el nervio de la propia foto (medido sobre ella). |
+| 7 | fosfenos (damero) | Pendiente: llegó solo como vista previa y no como archivo. Por ahora van mis fosfenos animados. |
+| 8 | `escena-08-newton.jpg` | Usada la versión sin vela (la otra tenía la vela cortada en el borde). Arriba tiene una costura de relleno que queda tapada con un fundido. |
+| 8 | cuaderno | Descartada: el punzón atraviesa la pupila y la voz dice «entre el ojo y el hueso». Además tenía letras falsas casi legibles. Se queda el cuaderno dibujado. |
+
+Prompts usados (formato 9:16, modelo pro; terminan pidiendo «no text, no letters, no logos, no watermark» y la cuarta parte de arriba oscura y vacía):
+
+| Escena | Prompt |
 |---|---|
-| 1 | Extreme close-up of a closed human eye being gently rubbed by a fingertip, while glowing swirling colored light patterns (checkerboard, rings, sparkles) float in the darkness above it, + estilo |
-| 2 | Cross-section of a human eyeball in a completely dark room, the light bulb next to it switched off, the retina at the back glowing with small multicolored sparks, + estilo |
-| 3 | Cross-section of a human eyeball being pressed from the top-front by a fingertip, the eyeball slightly dented, the red retina layer at the back stretching and glowing yellow, + estilo |
-| 4 | Microscopic view of retina layers: rows of photoreceptor cells at the bottom, small purple bipolar cells, round green ganglion cells at the top firing bright yellow electrical pulses along their fibers, + estilo |
-| 5 | Side profile silhouette of a human head with a translucent pink brain, glowing yellow pulses travelling from the eye along the optic nerve to the back of the brain, which lights up, + estilo |
-| 6 | Two identical glowing nerve fibers side by side carrying the same pattern of yellow pulses into a small pink brain, one starting from a light bulb and one from a fingertip pressing an eye, + estilo |
-| 7 | Full-frame abstract phosphene pattern: rotating colored checkerboard rings, soft cyan, magenta and yellow blobs and tiny white sparkles on black, + estilo |
-| 8 | Old 17th-century notebook page on a dark desk, ink sketch of an eye in profile with a thin blunt needle inserted between the eye and the bone of the eye socket, small colored rings drawn next to the eye, warm candle light, no readable text |
-| 9 | Three round glowing windows stacked vertically: one with white sparkling dots, one with wavy colored stripes, one with soft colored blobs, on black, + estilo |
+| 1 | Photorealistic extreme close-up of a young adult's closed eye being rubbed with an index fingertip, soft side lighting, real skin texture, very dark background. Above the eye, floating in the darkness, faint glowing swirls of colored light in magenta, cyan and yellow, like the patterns you see when you rub your eyes… |
+| 5 | Side profile of a translucent human head facing left, glass-like skin, a softly glowing pink brain visible inside. A thin bright yellow nerve fiber runs from the eye backwards to the back of the brain, which glows warm yellow. Clean 3D medical illustration style… |
+| 7 | Full-frame abstract image of phosphenes, the colored light patterns seen when pressing on closed eyes: a dark field with a slowly swirling checkerboard of faint colored squares arranged in concentric rings… |
+| 8 | Oil painting portrait of Isaac Newton in the style of the 1689 Godfrey Kneller portrait… |
 
 ## Texto del post (2 líneas, sin hashtags, como prueba)
 

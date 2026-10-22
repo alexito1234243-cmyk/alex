@@ -17,7 +17,7 @@ import ojos_colores as oc
 import piezas
 import tierra_agujero as ti
 from engine import FONT, H, W
-from rich import YELLOW, glow, linear, make_grain, radial, text
+from rich import YELLOW, clip_bg, glow, linear, make_grain, radial, text
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
@@ -130,10 +130,11 @@ def cover_auriculares(grain):
 def cover_ojos(grain):
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
     ctx = cairo.Context(surf)
-    t = 2.2
-    oc.tech_bg(ctx, t)
-    oc.phosphenes(ctx, 540, 1180, 400, t, a=1.0, burst=0.6)
-    oc.closed_eye(ctx, 520, 1600, 0.85, t, rub=1.0)
+    ctx.set_source_rgb(*oc.HOOK_TOP)
+    ctx.paint()
+    clip_bg(ctx, oc.photo("escena-01-ojo.jpg"), 0, dim=0.0, dy=oc.HOOK_DY)
+    oc.fade_top(ctx, oc.HOOK_TOP, oc.HOOK_DY - 10, oc.HOOK_DY + 200)
+    oc.swirl(ctx, 2.2, 1.0)
     finish(ctx, grain)
     title(ctx, [("¿POR QUÉ VES", False), ("COLORES", True), ("AL FROTARTE", False), ("LOS OJOS?", False)], 250)
     save_jpg(surf, os.path.join(HERE, "out", "ojos-colores", "portada.jpg"))
