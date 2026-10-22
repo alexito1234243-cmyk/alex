@@ -47,7 +47,7 @@ Prompts usados (formato 9:16, modelo pro; terminan pidiendo «no text, no letter
 | 7 | Full-frame abstract image of phosphenes, the colored light patterns seen when pressing on closed eyes: a dark field with a slowly swirling checkerboard of faint colored squares arranged in concentric rings… |
 | 8 | Oil painting portrait of Isaac Newton in the style of the 1689 Godfrey Kneller portrait… |
 
-## Texto del post (2 líneas, sin hashtags, como prueba)
+## Texto del post (2 líneas, sin hashtags)
 
 ¿Por qué ves colores al frotarte los ojos? 👁️
 Cuéntame: ¿qué ves tú, puntos, rayas o colores?

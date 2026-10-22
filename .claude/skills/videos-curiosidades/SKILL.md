@@ -130,7 +130,7 @@ Usa la misma estructura que `video/out/ojos-colores/guion.md`:
 
 Las fuentes también van en el docstring del script.
 
-**Texto del post:** dos líneas, sin hashtags (es la prueba en curso). La primera es el gancho con un emoji; la segunda, la misma pregunta del cierre. Va en `POST` dentro del script, que lo escribe en `texto-del-post.txt`.
+**Texto del post:** dos líneas, sin hashtags. Los hashtags no dan alcance (lo ha dicho varias veces Adam Mosseri, el jefe de Instagram), @resultaaquee no los usa y las palabras que la gente busca ya van en el gancho. Si el usuario quiere alguno, que sean 1-2 del tema, nunca una lista. La primera línea es el gancho con un emoji; la segunda, la misma pregunta del cierre. Va en `POST` dentro del script, que lo escribe en `texto-del-post.txt`.
 
 ### 9. Entregar
 

@@ -37,7 +37,7 @@ etiquetas pequeñas en mayúsculas, datos que cambian en directo, subtítulos ar
 1-3 palabras con la palabra clave en amarillo. Producción: motor propio (video/rich.py) y,
 si se usa Flow, un prompt de imagen en inglés por escena para generar los planos.
 
-## TEXTO DEL POST (2 líneas, sin hashtags como prueba)
+## TEXTO DEL POST (2 líneas, sin hashtags: no dan alcance y la cuenta de referencia no los usa)
 Línea 1: el gancho + 1 emoji. Línea 2: la misma pregunta del cierre para que comenten.
 Nunca «si quieres crear vídeos como estos…»: no vendemos nada.
 
