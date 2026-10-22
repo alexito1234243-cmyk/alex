@@ -13,7 +13,9 @@
 |---|---|
 | El gancho con una persona real haciendo lo que todos hacen (frotarse los ojos, mirar por la ventanilla) | Mecanismos por dentro: cortes, capas, piezas, circuitos. La IA se inventa la anatomía y la técnica |
 | Objetos y lugares reales (una cabina, una cocina, una calle) | Escenas cuya animación va sincronizada con la voz (etiquetas que aparecen palabra a palabra, datos en directo) |
-| Personajes históricos, como el retrato de Newton | Gráficos, comparaciones y esquemas «A = B» |
+| Personajes históricos en cuadro, como el retrato de Newton | Gráficos, comparaciones y esquemas «A = B» |
+| | Personas reales del siglo XX de las que hay fotos (Enzo Ferrari): una «foto» generada sería falsa. Mejor siluetas |
+| | Productos de marca: la IA pone escudos y logos inventados |
 | Ambientes abstractos que acompañan una idea (los fosfenos) | Cualquier cosa que lleve texto |
 
 Lo normal es que 3-5 escenas de 9 lleven imagen. Si el usuario pide imágenes para todas, explícale por qué no conviene y dale las que sí.

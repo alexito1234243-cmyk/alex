@@ -67,7 +67,34 @@ python3 .claude/skills/videos-curiosidades/scripts/comprobar_voz.py --modulo ojo
 
 El script sintetiza cada frase con Santa, la transcribe con Whisper y estima la duración total. Reescribe la frase hasta que Whisper la entienda. Hay excepciones: Whisper escribe «b» por «v» y falla con palabras raras («posfenos» por «fosfenos»). Eso no es culpa de la voz.
 
-### 4. Escenas
+### 4. Imágenes con IA: decide escena por escena y pasa el prompt al agente
+
+Este paso es obligatorio en todos los vídeos, aunque la respuesta sea «no hace falta». Repasa el guion escena por escena y pregúntate si una imagen detallada hecha con IA (Flow) aportaría algo que un dibujo no da:
+- **Suele aportar** en el gancho con una persona o una situación real, en objetos y lugares reales, en retratos de época (cuadros) y en ambientes.
+- **No aporta** en los mecanismos (cortes, piezas, esquemas), porque la IA se inventa la anatomía y la técnica.
+- **Tampoco** en productos de marca, porque mete escudos y logos falsos.
+- **Ni en personas reales del siglo XX** de las que hay fotos: no fabriques «fotos» falsas. Usa siluetas o un retrato claramente pintado.
+
+**Si alguna escena lo necesita**, pásale al usuario UN bloque de código listo para pegar en su agente (el de su ordenador, que tiene el MCP de Flow):
+
+```
+Genera estas imágenes con flow_generate_image. Formato 9:16, modelo pro, 2 versiones de cada una (count 2). Guárdalas en una carpeta llamada "<tema>" y renómbralas con el nombre que pongo delante de cada prompt, añadiendo -a y -b a cada versión (por ejemplo escena-01-a.png). No cambies los prompts y genéralas una detrás de otra.
+
+escena-01: <prompt en inglés: qué se ve con detalle, sujeto en el centro, la cuarta parte de arriba oscura y vacía, estilo>, vertical 9:16, no text, no letters, no logos, no watermark
+escena-05: <…>
+```
+
+Cómo pasarlo:
+- **Cuándo:** en un mensaje de texto en cuanto lo tengas, antes de ponerte a dibujar, para que lo vaya generando mientras tú renderizas. Recuérdalo en el resumen final.
+- **Debajo del bloque:** una línea por imagen diciendo para qué escena es y qué aporta.
+- **Qué pedirle:** que te mande los archivos originales en un mensaje nuevo, no capturas de pantalla.
+- **Detalles:** cómo escribir los prompts y cómo montar las imágenes, en `references/flow.md`.
+
+**Si ninguna escena lo necesita**, dilo en una línea con el motivo («los coches van dibujados para no inventar logos»). Así el usuario sabe que lo has pensado.
+
+**No esperes a las imágenes.** Entrega el vídeo dibujado y, cuando lleguen, móntalas con otra pasada de render.
+
+### 5. Escenas
 
 Copia la plantilla y renómbrala:
 
@@ -85,7 +112,7 @@ Cada escena es una función `s_xxx(ctx, t)` que dibuja el fotograma en el instan
 
 Detalles del motor, zonas seguras y sonidos: `references/motor.md`.
 
-### 5. Hoja de prueba (sin voz, en segundos)
+### 6. Hoja de prueba (sin voz, en segundos)
 
 ```sh
 cd video && python3 <slug>.py --sin-voz --preview /ruta/scratch/prev.png
@@ -99,7 +126,7 @@ cd video && python3 <slug>.py --sin-voz --preview /ruta/scratch/prev.png
 
 Corrige antes de poner la voz.
 
-### 6. Render con voz y revisión
+### 7. Render con voz y revisión
 
 ```sh
 cd video && python3 <slug>.py                      # unos 10 s de cálculo por segundo de vídeo: pon un timeout de 600000 ms
@@ -113,7 +140,7 @@ python3 ../.claude/skills/videos-curiosidades/scripts/revisar.py out/<carpeta>/<
 
 Si una escena se queda corta, alárgala y renderiza otra vez. Es mejor que publicar un vídeo que no se entiende.
 
-### 7. Portada
+### 8. Portada
 
 Añade `cover_<slug>(grain)` a `video/portadas.py`, copiando `cover_ojos`. Las reglas:
 - El título va en mayúsculas, en 3-4 líneas, con la palabra clave en amarillo (`title(ctx, [(texto, resaltado)], top)`).
@@ -122,7 +149,7 @@ Añade `cover_<slug>(grain)` a `video/portadas.py`, copiando `cover_ojos`. Las r
 
 Ejecuta solo esa función: `python3 -c "import portadas, rich; g,k = rich.make_grain(); portadas.cover_<slug>(g)"`. El `main` de `portadas.py` rehace todas las portadas.
 
-### 8. guion.md y texto del post
+### 9. guion.md y texto del post
 
 Los tiempos de cada escena salen con:
 
@@ -134,7 +161,7 @@ Usa la misma estructura que `video/out/ojos-colores/guion.md`:
 1. Título y ficha (duración, palabras, voz, estructura).
 2. Los tres ganchos, con el recomendado marcado.
 3. Una tabla con tiempo, voz, palabra clave, plano y etiquetas.
-4. Las imágenes de Flow, si las hay, con lo usado y lo descartado y por qué.
+4. Las imágenes con IA: el bloque de prompts que se pasó (o por qué no hacía falta) y, cuando lleguen, lo usado y lo descartado y por qué.
 5. El texto del post.
 6. Una tabla de datos con su estado y su fuente.
 
@@ -142,13 +169,14 @@ Las fuentes también van en el docstring del script.
 
 **Texto del post:** dos líneas, sin hashtags. Los hashtags no dan alcance (lo ha dicho varias veces Adam Mosseri, el jefe de Instagram), @resultaaquee no los usa y las palabras que la gente busca ya van en el gancho. Si el usuario quiere alguno, que sean 1-2 del tema, nunca una lista. La primera línea es el gancho con un emoji; la segunda, la misma pregunta del cierre. Va en `POST` dentro del script, que lo escribe en `texto-del-post.txt`.
 
-### 9. Entregar
+### 10. Entregar
 
 1. Añade una línea a `video/README.md` con el script y lo que tenga de nuevo.
 2. Ejecuta `python3 -m pyflakes` sobre los .py tocados.
 3. Haz `git add video/` (las imágenes de Flow van en `video/assets/<carpeta>/`). Escribe el commit en español y en imperativo («Añadir el vídeo de…»), con las líneas de atribución que pida la sesión y sin nombres de modelos.
 4. Haz push a la rama de la sesión. El MP4 debe pesar menos de 100 MB: el motor ya limita el bitrate.
 5. Envía al usuario el MP4, la portada, el texto del post y el guion, si tienes una herramienta para enviar archivos.
+   Recuérdale el bloque de prompts para su agente si se lo pasaste en el paso 4 (o di en una línea por qué este vídeo no lo necesita).
 6. Dile qué hacer:
    - Publícalo con esa portada y ese texto.
    - Compártelo también en Facebook.
@@ -175,11 +203,11 @@ Lecciones:
 El MCP de Flow del usuario solo funciona en su ordenador: maneja su Chrome con su sesión de Google. Desde la nube no se puede usar, y no hay que pedirle cookies ni claves.
 
 El reparto de trabajo es este:
-1. Tú le das un bloque de prompts listo para pegar en su agente.
+1. Tú le das el bloque de prompts del paso 4, listo para pegar en su agente.
 2. Él te pasa las imágenes en un mensaje normal.
 3. Tú las montas con `Still` y `clip_bg`.
 
-Usa imágenes solo donde el realismo aporta (el gancho con una persona real, objetos reales, personajes históricos, ambientes). Los mecanismos se quedan dibujados, porque la IA se inventa la anatomía y la técnica. Rechaza cualquier imagen que contradiga el guion y explica por qué.
+Rechaza cualquier imagen que contradiga el guion y explica por qué.
 
 ## Errores que ya costaron tiempo
 
