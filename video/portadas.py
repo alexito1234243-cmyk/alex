@@ -12,6 +12,7 @@ import cairo
 import auriculares as au
 import avion_luces as av
 import giro_movil as gm
+import lamborghini_ferrari as lf
 import movil_carga as mc
 import ojos_colores as oc
 import piezas
@@ -140,6 +141,22 @@ def cover_ojos(grain):
     save_jpg(surf, os.path.join(HERE, "out", "ojos-colores", "portada.jpg"))
 
 
+def cover_lambo(grain):
+    surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, W, H)
+    ctx = cairo.Context(surf)
+    t = 1.0
+    lf.tech_bg(ctx, t)
+    lf.ground(ctx, 1460, t)
+    glow(ctx, 540, 1340, 300, YELLOW, 0.5, add=True)
+    lf.car(ctx, 268, 1460, 0.82, lf.FER, t)
+    lf.car(ctx, 812, 1460, 0.82, lf.LAMBO, t, kind="wedge", flip=True)
+    lf.bolt(ctx, 540, 1340, 1.7, YELLOW)
+    lf.bubble(ctx, 300, 1090, 330, 170, (280, 1310), 1.0, lambda c: text(c, "#@%!", 0, 0, 74, col=lf.RED))
+    finish(ctx, grain)
+    title(ctx, [("¿LAMBORGHINI NACIÓ", False), ("POR UN INSULTO", True), ("DE FERRARI?", False)], 270)
+    save_jpg(surf, os.path.join(HERE, "out", "lamborghini-ferrari", "portada.jpg"))
+
+
 def avatar(grain, size=1080):
     """Interrogación amarilla cuyo punto es la Tierra: se lee incluso a 110 px."""
     surf = cairo.ImageSurface(cairo.FORMAT_ARGB32, size, size)
@@ -185,5 +202,6 @@ if __name__ == "__main__":
     cover_giro(grain)
     cover_auriculares(grain)
     cover_ojos(grain)
+    cover_lambo(grain)
     avatar(grain)
     print("OK")

@@ -54,6 +54,9 @@ Escribe una escena por frase y frases cortas. Nunca pongas «sígueme para crear
 - No empieces una frase con una vocal suelta ni con «Y», «Así», «Está», «Va dentro» o «Dentro». Santa se las come. Usa «Cuando», «Luego», «Por cierto»…
 - Escribe los números en palabras en el texto hablado. Si el subtítulo debe llevar cifras, usa `Scene(voice="...")` con la versión hablada.
 - Algunas palabras se funden: «tú ves» sonó «tuve». Reordena la frase («¿qué ves tú?»).
+- Al empezar frase también flojean la F, la S y la L: «Ferruccio» sonó «Perucho», «Furioso» sonó «Curioso», «Su respuesta» sonó «Tu respuesta» y «Lamborghini se picó» sonó «Amborgini». Empieza con otra palabra («Muy enfadado, …», «Con ese dinero…», «Pero…»).
+- Los nombres que empiezan por vocal («Enzo») se los come también a mitad de frase. Escríbelos en pantalla y que la voz diga otra cosa («el dueño de Ferrari»).
+- Los nombres extranjeros, escríbelos como suenan en `voice=` («Ferruchio»: con «Ferruccio», Santa decía «Ferruxio»).
 
 Comprueba todas las frases ANTES de dibujar:
 
@@ -75,6 +78,7 @@ cp .claude/skills/videos-curiosidades/assets/plantilla.py video/<slug>.py
 Cada escena es una función `s_xxx(ctx, t)` que dibuja el fotograma en el instante `t`. Las animaciones se enganchan a palabras con `w(s_xxx, "palabra")`, nunca a segundos fijos: la voz decide la duración. Principios que han funcionado:
 - **Un objeto protagonista grande** en el centro (y 480-1600). Va cambiando: objeto → corte por dentro → zoom al detalle.
 - **Que algo se mueva siempre.** Cada palabra clave dispara algo: una etiqueta, un brillo, un dato, un efecto de sonido.
+- **Ninguna escena empieza vacía.** Si lo importante llega con una palabra del final, enséñalo antes en tenue (siluetas apagadas, un plano azul, una rueda que gira) y enciéndelo con la palabra. El primer fotograma del gancho tiene que llamar la atención por sí solo.
 - **Etiquetas pequeñas en mayúsculas** con `mini_tag`, al menos a 90 px de los bordes: la cámara acerca un 9 % y lo empuja hacia fuera.
 - **Datos en directo** con `panel` o `readout`, arriba a la derecha (x 600-980, y 470-600), debajo de los subtítulos.
 - **El cierre**: la pregunta visual (opciones que se encienden al nombrarlas).
