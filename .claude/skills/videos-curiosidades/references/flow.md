@@ -20,6 +20,22 @@
 
 Lo normal es que 3-5 escenas de 9 lleven imagen. Si el usuario pide imágenes para todas, explícale por qué no conviene y dale las que sí.
 
+## Estilo de la casa (el predeterminado)
+
+Las imágenes se piden por defecto en el estilo de los dibujos del motor, para que casen con las etiquetas, los bocadillos y las demás escenas. Las pides realistas («foto») solo si el usuario lo pide.
+
+- **La referencia.** `assets/estilo-referencia.png` es un fotograma hecho con el motor, sin texto. Se regenera con `python3 scripts/estilo_referencia.py`.
+- **Dónde la necesita el usuario.** Envíasela la primera vez, para que la guarde en la carpeta `inputs/` de su MCP de Flow. Si ya la tiene, no hace falta.
+- **El bloque de prompts:**
+  - empieza pidiendo al agente que la suba con `flow_upload_file` y name `estilo`;
+  - cada prompt empieza por `Image 1 -> Style: @{estilo}.`, describe la escena y termina con el bloque de estilo:
+
+```
+in the same visual style as @Image 1: flat 2D vector illustration like a motion-graphics explainer, simple rounded shapes with smooth two-tone gradients, no outlines, soft blurred shadow under each object, soft glow on lights and highlights, very dark navy background with a faint lighter glow in the center and a barely visible thin square grid, limited palette of saturated red, warm yellow, cyan blue and soft white, one large main subject in the center, minimalist, vertical 9:16, top quarter of the frame empty dark background, no text, no letters, no numbers, no logos, no watermark
+```
+
+- **Personas:** sin rasgos («faceless»), como las siluetas del motor. Así tampoco se fabrica la cara de nadie real.
+
 ## Cómo escribir los prompts
 
 - **Idioma:** en inglés.

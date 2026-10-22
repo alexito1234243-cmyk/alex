@@ -75,13 +75,19 @@ Este paso es obligatorio en todos los vídeos, aunque la respuesta sea «no hace
 - **Tampoco** en productos de marca, porque mete escudos y logos falsos.
 - **Ni en personas reales del siglo XX** de las que hay fotos: no fabriques «fotos» falsas. Usa siluetas o un retrato claramente pintado.
 
-**Si alguna escena lo necesita**, pásale al usuario UN bloque de código listo para pegar en su agente (el de su ordenador, que tiene el MCP de Flow):
+**Si alguna escena lo necesita**, pásale al usuario UN bloque de código listo para pegar en su agente (el de su ordenador, que tiene el MCP de Flow).
+
+**El estilo:**
+- Por defecto, el de los dibujos del motor: el usuario prefiere que las imágenes casen con las animaciones.
+- Se consigue subiendo la imagen de referencia `assets/estilo-referencia.png` como `@{estilo}`. Envíasela si aún no la tiene.
+- El bloque de estilo completo está en `references/flow.md`.
+- Solo si el usuario pide fotos o realismo, quita la referencia y pide «photorealistic, cinematic».
 
 ```
-Genera estas imágenes con flow_generate_image. Formato 9:16, modelo pro, 2 versiones de cada una (count 2). Guárdalas en una carpeta llamada "<tema>" y renómbralas con el nombre que pongo delante de cada prompt, añadiendo -a y -b a cada versión (por ejemplo escena-01-a.png). No cambies los prompts y genéralas una detrás de otra.
+Primero sube la imagen de referencia: flow_upload_file con filePath = la ruta completa de inputs/estilo-referencia.png y name = "estilo". Después genera estas imágenes con flow_generate_image. Formato 9:16, modelo pro, 2 versiones de cada una (count 2). Guárdalas en una carpeta llamada "<tema>" y renómbralas con el nombre que pongo delante de cada prompt, añadiendo -a y -b a cada versión (por ejemplo escena-01-a.png). Copia los prompts tal cual, incluido @{estilo}, y genéralas una detrás de otra.
 
-escena-01: <prompt en inglés: qué se ve con detalle, sujeto en el centro, la cuarta parte de arriba oscura y vacía, estilo>, vertical 9:16, no text, no letters, no logos, no watermark
-escena-05: <…>
+escena-01: Image 1 -> Style: @{estilo}. <qué se ve, con detalle y en inglés>, <bloque de estilo de references/flow.md>
+escena-05: Image 1 -> Style: @{estilo}. <…>, <bloque de estilo>
 ```
 
 Cómo pasarlo:
