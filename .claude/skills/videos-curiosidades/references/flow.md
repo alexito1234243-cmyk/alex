@@ -52,4 +52,11 @@ Pídele los archivos originales (no capturas de pantalla) y en un mensaje normal
 4. **Cópialas al repo** como `video/assets/<carpeta>/escena-NN-nombre.jpg`.
 5. **Móntalas** con `Still` y `clip_bg` (ver `motor.md`, apartado 5). Ajusta `dy` si la imagen pisa los subtítulos y mide sobre la foto lo que haya que alinear.
 6. **Saca fotogramas** de las escenas con foto y míralos antes del render final.
+   Para colocar etiquetas, saca cada imagen ya recortada a 1080×1920 con una cuadrícula de 100 px (`drawgrid` de ffmpeg) y lee las coordenadas.
+
+Lo que ya ha pasado con las imágenes de Flow:
+- **Letras aunque pidas «no text».** Salió «landini» en el capó de un tractor, otra marca real. Mira de cerca los vehículos y los carteles.
+- **Coches que se parecen a modelos concretos.** «Italian grand tourer» sale casi siempre con forma de Ferrari (un 275 GTB amarillo). No lo etiquetes como otro modelo.
+- **Menos resolución.** A veces llegan a 768×1376. Se escalan con lanczos y nitidez (`Still`), pero se ven algo blandas. Pide el modelo pro y avisa al usuario.
+- **Escenas con personas reales.** Pídelas como cuadro pintado y marca la escena «RECREACIÓN».
 7. **Apúntalo en `guion.md`**: qué imagen va en cada escena y qué se descartó.

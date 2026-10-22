@@ -32,7 +32,7 @@ import cairo
 
 from engine import clamp, ease_in_out, ease_out_back
 from piezas import CYAN, GREEN, ORANGE, RED, WHITE, appear, mini_tag, panel, spaced, tech_bg
-from rich import (TOP_SHORT, YELLOW, Scene, Still, bezier, clip_bg, disc, fill_rr, glow, linear, mul, poly, preview, radial, render,
+from rich import (TOP_SHORT, YELLOW, Scene, Still, bezier, clip_bg, disc, fade_top, fill_rr, glow, linear, mul, poly, preview, radial, render,
                   rgba, rr, soft_ellipse, source, stroke, text, word_time)
 
 SKIN = (0.88, 0.66, 0.54)
@@ -343,13 +343,6 @@ def swirl(ctx, t, k):
     ctx.set_source_surface(photo("escena-01-ojo.jpg").frame(t), 0, HOOK_DY)
     ctx.mask(radial(cx, cy, 340, [(0, (0, 0, 0, k)), (0.7, (0, 0, 0, k)), (1, (0, 0, 0, 0))]))
     ctx.restore()
-
-
-def fade_top(ctx, col, y0, y1):
-    """Funde la parte de arriba de una foto con un color liso (tapa costuras y deja sitio a los subtítulos)."""
-    ctx.rectangle(0, 0, 1080, y1)
-    ctx.set_source(linear(0, y0, 0, y1, [(0, col), (1, rgba(col, 0))]))
-    ctx.fill()
 
 
 # ---------- escenas ----------

@@ -13,17 +13,19 @@
 
 ## Guion con tiempos
 
+Todas las escenas llevan de fondo una imagen de Flow (ver más abajo); encima van las etiquetas, los bocadillos y las animaciones del motor.
+
 | Tiempo | Voz (y subtítulo) | Palabra clave | Plano | Etiquetas y datos |
 |---|---|---|---|---|
-| 0,0-3,3 | ¿Sabías que Lamborghini nació por un insulto de Ferrari? | insulto | Un gran turismo rojo y un deportivo amarillo en cuña, morro con morro y con chispas. En «insulto», bocadillo «#@%!» y rayo. | FERRARI · LAMBORGHINI |
-| 3,3-7,7 | Su creador, Ferruccio Lamborghini, fabricaba tractores y se hizo rico. | tractores | Tractor azul en un campo arado; en «rico» crece un montón de monedas. | FERRUCCIO LAMBORGHINI · 1948 · TRACTORES |
-| 7,7-10,7 | Con ese dinero se compró unos cuantos Ferrari. | Ferrari | Tres siluetas de Ferrari que se encienden una a una. | FERRARI 250 GT |
-| 10,7-13,5 | Pero el embrague fallaba una y otra vez. | embrague | Ferrari en la carretera con humo; lupa sobre el embrague, que se agrieta; tres avisos ⚠ con «una», «otra» y «vez». | EMBRAGUE |
-| 13,5-16,9 | Según contaba él, fue a quejarse a la fábrica de Ferrari. | quejarse | Ferruccio con un bocadillo (embrague roto y «!!») delante de la fábrica. | MARANELLO · SEGÚN CONTABA ÉL EN 1991 |
-| 16,9-22,4 | Muy enfadado, el dueño de Ferrari le contestó: «Sabrás llevar un tractor, pero nunca un Ferrari». | nunca | Ferruccio y Enzo (con gafas de sol), Enzo encendido en rojo. Bocadillo: tractor ✓ y Ferrari ✗ al decirlo. | FERRUCCIO · ENZO FERRARI |
-| 22,4-26,4 | Tan picado se quedó que decidió fabricar el coche perfecto. | perfecto | Plano azul de un gran turismo que, bajo un foco, se convierte en el coche amarillo. | NACE LAMBORGHINI · 1963 |
-| 26,4-29,9 | Por cierto, eligió un toro como emblema porque era Tauro. | toro | Rueda del zodiaco; en «toro», una cabeza de toro dorada (no es el escudo de la marca); en «Tauro», su símbolo. | TAURO · 28 DE ABRIL DE 1916 |
-| 29,9-33,7 | ¿Con cuál te quedas: Ferrari o Lamborghini? | Lamborghini | El Ferrari rojo y el Lamborghini amarillo con «VS», y cada uno se enciende al nombrarlo. | FERRARI · LAMBORGHINI |
+| 0,0-3,3 | ¿Sabías que Lamborghini nació por un insulto de Ferrari? | insulto | Foto: Ferrari rojo y Lamborghini amarillo morro con morro bajo la lluvia, con una chispa que parpadea. En «insulto», la cámara se sacude, salta un fogonazo y sale el bocadillo «#@%!». | FERRARI · LAMBORGHINI |
+| 3,3-7,7 | Su creador, Ferruccio Lamborghini, fabricaba tractores y se hizo rico. | tractores | Foto: fila de tractores azules nuevos y un hombre de espaldas; en «rico» sube la luz dorada. | FERRUCCIO LAMBORGHINI · 1948 · TRACTORES |
+| 7,7-10,7 | Con ese dinero se compró unos cuantos Ferrari. | Ferrari | Foto: garaje en penumbra; los tres Ferrari se encienden uno a uno al nombrarlos. | FERRARI 250 GT |
+| 10,7-13,5 | Pero el embrague fallaba una y otra vez. | embrague | Foto: el coche echando humo en la cuneta. Encima, una lupa con el embrague que se agrieta y tres avisos ⚠. | EMBRAGUE |
+| 13,5-16,9 | Según contaba él, fue a quejarse a la fábrica de Ferrari. | quejarse | Foto: la fábrica al anochecer y un hombre entrando, con el bocadillo del embrague roto y «!!». | MARANELLO · SEGÚN CONTABA ÉL EN 1991 |
+| 16,9-22,4 | Muy enfadado, el dueño de Ferrari le contestó: «Sabrás llevar un tractor, pero nunca un Ferrari». | nunca | Cuadro pintado: el de las gafas de sol señala la puerta; se enciende en rojo con «enfadado». Bocadillo: tractor ✓ y Ferrari ✗. | RECREACIÓN · FERRUCCIO · ENZO FERRARI |
+| 22,4-26,4 | Tan picado se quedó que decidió fabricar el coche perfecto. | perfecto | Foto: taller en penumbra; primero se iluminan los planos y, en «perfecto», el coche amarillo bajo el foco. | NACE LAMBORGHINI · 1963 |
+| 26,4-29,9 | Por cierto, eligió un toro como emblema porque era Tauro. | toro | Foto: un toro embistiendo al atardecer; se ilumina en «toro», y en «Tauro» se enciende la constelación del cielo. | TAURO · NACIÓ UN 28 DE ABRIL DE 1916 |
+| 29,9-33,7 | ¿Con cuál te quedas: Ferrari o Lamborghini? | Lamborghini | Foto: los dos coches de frente bajo la lluvia; cada uno se ilumina al nombrarlo. | FERRARI · VS · LAMBORGHINI |
 
 Voz comprobada con Whisper:
 - «Ferruccio» se dice «Ferruchio», como en italiano; con la grafía normal, Santa decía «Ferruxio». Whisper lo escribe «ferrucho».
@@ -55,6 +57,22 @@ escena-08: A powerful black fighting bull charging straight at the camera throug
 
 escena-09: Night, front view, low angle: a red 1960s Italian grand tourer and a yellow modern wedge-shaped Italian supercar parked side by side facing the camera, headlights on, wet asphalt reflecting red and yellow light, epic showdown. Cars in the lower-middle of the frame, top quarter dark and empty. Photorealistic, cinematic, vertical 9:16, no text, no letters, no logos, no badges, no watermark.
 ```
+
+### Lo que se usó
+
+Llegaron 18 imágenes (2 por escena) a 768×1376, menos que los 1080×1920 del vídeo. Se escalan con lanczos y un poco de nitidez, y aun así se ven algo blandas.
+
+| Escena | Usada | Por qué / descartada |
+|---|---|---|
+| 1 | a | Más cerca y más tensa que la b |
+| 2 | a | La b lleva «landini» escrito en el capó: es otra marca real de tractores |
+| 3 | a | De lado se ven mejor los tres coches |
+| 4 | a | El humo sale de debajo del coche; en la b sale del motor y no cuadra con el embrague |
+| 5 | a | Más cerca |
+| 6 | a | Se ve claro el gesto de señalar la puerta y sigue siendo un cuadro |
+| 7 | a | Más limpia. Ojo: el coche se parece a un Ferrari 275 GTB, así que no se etiqueta como «el primer Lamborghini» |
+| 8 | a | Su constelación es más fiel a Tauro (con las Pléyades). La foto se baja 200 px para que no quede bajo los subtítulos |
+| 9 | a | Coches más grandes y centrados |
 
 ## Texto del post (2 líneas, sin hashtags)
 

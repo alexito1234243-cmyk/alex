@@ -15,11 +15,15 @@ Datos y fuentes:
   https://jalopnik.com/1759745487 · https://www.lambocars.com/ferruccio-lamborghini-a-biography/
   Lo de «el embrague era la misma pieza que la de sus tractores» se deja fuera: no hay fuente sólida.
 - El toro: Ferruccio era Tauro y le apasionaban los toros de lidia: https://en.wikipedia.org/wiki/Lamborghini
-- No se copian logos: coches, tractor y toro están dibujados y son genéricos.
+- Imágenes de Flow (Nano Banana) en video/assets/lamborghini-ferrari/, una por escena, pedidas sin logos: la IA
+  deforma los escudos y los coches se reconocen por la forma y el color. La escena 6 (Enzo y Ferruccio) es un
+  cuadro pintado y va marcada «RECREACIÓN»: una foto realista de dos personas reales sería falsa. El coche
+  amarillo de la escena 7 se parece a un Ferrari 275 GTB, así que no se etiqueta como «el primer Lamborghini».
 
 Uso: python3 video/lamborghini_ferrari.py [--voz santa|dora|alex|eleven] [--sin-voz]  ->  video/out/lamborghini-ferrari/
      python3 video/lamborghini_ferrari.py --preview [png]
 """
+import functools
 import math
 import os
 import sys
@@ -27,9 +31,10 @@ import sys
 import cairo
 
 from engine import clamp, ease_in_out, ease_out_back
-from piezas import RED, WHITE, appear, bolt, mini_tag, panel, person, spaced, tech_bg
-from rich import (TOP_SHORT, YELLOW, Scene, badge, bezier, disc, fill_rr, glow, linear, mix, mul, poly, preview,
-                  radial, render, rgba, soft_ellipse, source, stroke, text, word_time)
+from piezas import RED, WHITE, appear, mini_tag, panel, spaced
+from rich import (TOP_SHORT, YELLOW, Scene, Still, badge, bezier, clip_bg, disc, fade_top, fill_rr, glow,
+                  light_up, linear, mix, mul, poly, preview, radial, render, rgba, soft_ellipse, source, stroke, text,
+                  word_time)
 
 OUT = "lamborghini-ferrari"
 FER = (0.86, 0.09, 0.10)
@@ -176,25 +181,6 @@ def tractor(ctx, x, y, s, t, spin=1.0, col=TRAC):
     ctx.restore()
 
 
-def ground(ctx, y, t, speed=0.0, field=False):
-    """Suelo: carretera con línea discontinua que corre, o campo arado."""
-    if field:
-        ctx.rectangle(0, y, 1080, 1920 - y)
-        ctx.set_source(linear(0, y, 0, 1920, [(0, (0.30, 0.22, 0.13)), (1, (0.10, 0.07, 0.05))]))
-        ctx.fill()
-        for k in range(8):
-            yy = y + 30 + k * k * 9
-            stroke(ctx, [(0, yy), (1080, yy)], (0, 0, 0, 0.25), 3 + k)
-        return
-    ctx.rectangle(0, y, 1080, 230)
-    ctx.set_source(linear(0, y, 0, y + 230, [(0, (0.12, 0.12, 0.14)), (1, (0.05, 0.05, 0.06))]))
-    ctx.fill()
-    off = (t * speed) % 160
-    for k in range(-1, 9):
-        x0 = k * 160 - off
-        fill_rr(ctx, x0, y + 110, 90, 12, 6, (1, 1, 1, 0.55))
-
-
 # ---------- piezas ----------
 
 def clutch(ctx, x, y, r, t, broken=0.0):
@@ -239,24 +225,6 @@ def warning(ctx, x, y, s, p):
     ctx.restore()
 
 
-def coins(ctx, x, y, n, t):
-    """Montón de monedas que crece (n puede ser fraccionario)."""
-    for k in range(int(n)):
-        yy = y - 18 * k
-        ctx.save()
-        ctx.translate(x + 3 * math.sin(k * 1.7), yy)
-        ctx.scale(1, 0.32)
-        disc(ctx, 0, 0, 70, mul(GOLD, 0.65))
-        ctx.restore()
-        ctx.save()
-        ctx.translate(x + 3 * math.sin(k * 1.7), yy - 8)
-        ctx.scale(1, 0.32)
-        disc(ctx, 0, 0, 70, radial(-20, -20, 90, [(0, mix(GOLD, WHITE, 0.4)), (1, GOLD)]))
-        ctx.restore()
-    if n >= 1:
-        glow(ctx, x, y - 18 * int(n), 120, GOLD, 0.35, add=True)
-
-
 def bubble(ctx, x, y, w_, h, tip, p, draw=None):
     """Bocadillo de cómic que aparece con rebote, con el pico hacia `tip`; draw(ctx) pinta el contenido."""
     if p <= 0:
@@ -273,249 +241,174 @@ def bubble(ctx, x, y, w_, h, tip, p, draw=None):
     ctx.restore()
 
 
-def factory(ctx, x, y, s):
-    """Nave industrial con tejado de dientes de sierra y chimenea."""
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    stroke(ctx, [(170, -330), (170, -470)], (0.30, 0.30, 0.34), 30)
-    pts = [(-220, 0), (-220, -300)]
-    for k in range(4):
-        pts += [(-220 + 110 * k + 110, -390), (-220 + 110 * k + 110, -300)]
-    pts += [(220, 0)]
-    poly(ctx, pts, linear(0, -390, 0, 0, [(0, (0.42, 0.40, 0.42)), (1, (0.22, 0.21, 0.23))]))
-    for k in range(4):
-        fill_rr(ctx, -190 + 105 * k, -250, 70, 90, 6, (1.0, 0.85, 0.5, 0.75))
-    fill_rr(ctx, -70, -150, 140, 150, 8, (0.12, 0.11, 0.12))
-    ctx.restore()
+# ---------- fotos (Flow) y lo que se mide sobre ellas, en coordenadas de pantalla ----------
+
+ASSETS = os.path.join(os.path.dirname(os.path.abspath(__file__)), "assets", "lamborghini-ferrari")
+SPARK = (550, 1190)  # chispa entre los morros (foto 1)
+CARS3 = [(190, 1030), (470, 1035), (800, 1050)]  # los tres Ferrari del garaje (foto 3)
+BULL_DY = 200  # la foto del toro baja para que la constelación no quede bajo los subtítulos
+BULL_TOP = (0.034, 0.112, 0.19)
+ALDEBARAN = (568, 370 + BULL_DY)
 
 
-def bull_head(ctx, x, y, s, a=1.0):
-    """Cabeza de toro de frente, enfadada (no es el escudo de la marca)."""
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    for sd in (-1, 1):
-        outer = bezier((sd * 60, -40), (sd * 150, -40), (sd * 195, -110), (sd * 150, -195), 16)
-        inner = bezier((sd * 150, -195), (sd * 168, -118), (sd * 130, -72), (sd * 55, -72), 16)
-        poly(ctx, outer + inner, (0.96, 0.92, 0.82, a))
-        poly(ctx, [(sd * 70, -42), (sd * 150, -16), (sd * 82, 8)], rgba(mul(GOLD, 0.62), a))
-    ctx.new_path()
-    ctx.move_to(-76, -72)
-    ctx.curve_to(-84, 10, -62, 60, -52, 98)
-    ctx.line_to(52, 98)
-    ctx.curve_to(62, 60, 84, 10, 76, -72)
-    ctx.curve_to(40, -98, -40, -98, -76, -72)
-    ctx.close_path()
-    ctx.set_source(linear(0, -98, 0, 98, [(0, rgba(mix(GOLD, WHITE, 0.25), a)), (1, rgba(mul(GOLD, 0.55), a))]))
-    ctx.fill()
-    ctx.save()
-    ctx.translate(0, 88)
-    ctx.scale(1, 0.62)
-    disc(ctx, 0, 0, 64, rgba(mix(GOLD, WHITE, 0.45), a))
-    ctx.restore()
-    for sd in (-1, 1):
-        disc(ctx, sd * 24, 92, 10, (0.25, 0.15, 0.05, a))
-        disc(ctx, sd * 34, -12, 10, (0.08, 0.05, 0.02, a))
-        stroke(ctx, [(sd * 62, -40), (sd * 16, -26)], (0.25, 0.15, 0.05, a), 8)
-    ctx.restore()
+@functools.lru_cache(maxsize=None)
+def photo(name):
+    return Still(os.path.join(ASSETS, name))
 
 
-def taurus(ctx, x, y, s, col, a=1.0):
-    """El símbolo de Tauro: un círculo con dos cuernos encima."""
-    ctx.save()
-    ctx.translate(x, y)
-    ctx.scale(s, s)
-    ctx.new_sub_path()
-    ctx.arc(0, 30, 50, 0, 2 * math.pi)
-    ctx.new_sub_path()
-    ctx.arc(0, -82, 62, math.pi * 0.12, math.pi * 0.88)
-    source(ctx, rgba(col, a))
-    ctx.set_line_width(14)
-    ctx.set_line_cap(cairo.LINE_CAP_ROUND)
-    ctx.stroke()
-    ctx.restore()
+def pill(ctx, s, x, y, size=26, col=WHITE, a=1.0, anchor="center"):
+    """Texto espaciado sobre una píldora oscura, para que se lea encima de una foto clara."""
+    if a <= 0:
+        return
+    ctx.select_font_face("Inter", cairo.FONT_SLANT_NORMAL, cairo.FONT_WEIGHT_BOLD)
+    ctx.set_font_size(size)
+    width = sum(ctx.text_extents(ch).x_advance + size * 0.18 for ch in s) - size * 0.18
+    x0 = {"center": x - width / 2, "left": x, "right": x - width}[anchor]
+    fill_rr(ctx, x0 - 18, y - size * 0.85, width + 36, size * 1.7, size * 0.85, (0.02, 0.02, 0.04, 0.72 * a))
+    spaced(ctx, s, x0, y, size, col=rgba(col, a))
 
 
-def sunglasses(ctx, x, y, s, look):
-    ex = x + s * 40 * look
-    fill_rr(ctx, ex - 40 * s, y - 6 * s, 80 * s, 30 * s, 12 * s, (0.04, 0.04, 0.05))
-    stroke(ctx, [(ex - 40 * s * look, y + 2 * s), (x - 70 * s * look, y - 2 * s)], (0.04, 0.04, 0.05), 6 * s)
+def ptag(ctx, s, ax, ay, lx, ly, p, col=WHITE, size=28):
+    """mini_tag para fotos: la misma línea, con el texto sobre una píldora oscura."""
+    if p <= 0:
+        return
+    mini_tag(ctx, "", ax, ay, lx, ly, p, col=col)
+    if p > 0.5:
+        right = lx >= ax
+        pill(ctx, s, lx + (14 if right else -14), ly, size, col, clamp((p - 0.5) / 0.5), "left" if right else "right")
 
 
 # ---------- escenas ----------
 
 def s_hook(ctx, t):
-    tech_bg(ctx, t)
-    ground(ctx, 1250, t)
     hit = appear(t, w(s_hook, "insulto"), 0.35)
-    glow(ctx, 540, 1150, 170, YELLOW, 0.22 * (0.6 + 0.4 * math.sin(t * 23)), add=True)  # chispas entre los morros
-    for k in range(5):
-        a = k * 1.3 + t * 7
-        stroke(ctx, [(540, 1150), (540 + 60 * math.cos(a), 1150 + 40 * math.sin(a))], rgba(YELLOW, 0.5 * abs(math.sin(t * 11 + k))), 3)
-    car(ctx, 268, 1250, 0.82, FER, t, shake=0.3 * hit * (1 - clamp((t - w(s_hook, "insulto")) / 0.8)))
-    car(ctx, 812, 1250, 0.82, LAMBO, t, kind="wedge", flip=True, shake=hit * (1 - clamp((t - w(s_hook, "insulto")) / 1.2)))
+    jolt = hit * (1 - clamp((t - w(s_hook, "insulto")) / 0.6))
+    ctx.save()  # sacudida de cámara con el insulto
+    ctx.translate(12 * jolt * math.sin(t * 70), 7 * jolt * math.cos(t * 55))
+    clip_bg(ctx, photo("escena-01.jpg"), t, dim=0.0)
+    ctx.restore()
+    flick = 0.5 + 0.5 * math.sin(t * 31) * math.sin(t * 17)
+    light_up(ctx, photo("escena-01.jpg"), t, *SPARK, 170, 0.3 + 0.3 * flick + 0.6 * hit)  # la chispa está viva
     if hit > 0:
-        glow(ctx, 540, 1130, 280, YELLOW, 0.5 * hit, add=True)
-        bolt(ctx, 540, 1130, 1.7 * ease_out_back(hit), YELLOW)
+        glow(ctx, *SPARK, 320, (0.6, 0.85, 1.0), 0.6 * hit, add=True)
 
     def grawlix(c):
         text(c, "#@%!", 0, 0, 74, col=RED)
-    bubble(ctx, 300, 820, 330, 170, (280, 1100), hit, grawlix)
-    spaced(ctx, "FERRARI", 268, 1420, 34, col=rgba(FER, 0.9 * appear(t, w(s_hook, "Ferrari"), 0.4)), anchor="center")
-    spaced(ctx, "LAMBORGHINI", 790, 1420, 34, col=rgba(LAMBO, 0.9 * appear(t, w(s_hook, "Lamborghini"), 0.4)), anchor="center")
+    bubble(ctx, 270, 760, 330, 170, (250, 950), hit, grawlix)
+    spaced(ctx, "FERRARI", 230, 1440, 34, col=rgba(FER, appear(t, w(s_hook, "Ferrari"), 0.4)), anchor="center")
+    spaced(ctx, "LAMBORGHINI", 800, 1500, 34, col=rgba(LAMBO, appear(t, w(s_hook, "Lamborghini"), 0.4)), anchor="center")
 
 
 def s_tractors(ctx, t):
-    tech_bg(ctx, t)
-    ground(ctx, 1330, t, field=True)
-    tractor(ctx, 420, 1330, 1.1, t)
-    rich_ = clamp((t - w(s_tractors, "rico") + 0.1) / 0.9)
-    coins(ctx, 860, 1320, 7 * ease_in_out(rich_), t)
-    mini_tag(ctx, "1948 · TRACTORES", 520, 1130, 560, 860, appear(t, w(s_tractors, "tractores"), 0.4), col=SKY)
-    mini_tag(ctx, "FERRUCCIO LAMBORGHINI", 230, 1060, 300, 700, appear(t, w(s_tractors, "creador"), 0.4), col=WHITE)
+    clip_bg(ctx, photo("escena-02.jpg"), t, dim=0.0)
+    rich_ = ease_in_out(clamp((t - w(s_tractors, "rico") + 0.1) / 0.8))
+    light_up(ctx, photo("escena-02.jpg"), t, 640, 1250, 560, 0.35 * rich_)  # la luz dorada sube con «rico»
+    ptag(ctx, "1948 · TRACTORES", 360, 1330, 390, 900, appear(t, w(s_tractors, "tractores"), 0.4), col=SKY)
+    ptag(ctx, "FERRUCCIO LAMBORGHINI", 868, 1265, 780, 1080, appear(t, w(s_tractors, "creador"), 0.4), col=WHITE)
 
 
 def s_cars(ctx, t):
-    tech_bg(ctx, t)
-    spots = [(300, 1000, "dinero"), (780, 1000, "cuantos"), (540, 1420, "Ferrari")]
-    for x, y, word in spots:
+    clip_bg(ctx, photo("escena-03.jpg"), t, dim=0.45)  # garaje en penumbra: cada coche se enciende al nombrarlo
+    for (x, y), word in zip(CARS3, ("dinero", "cuantos", "Ferrari")):
         p = appear(t, w(s_cars, word), 0.4)
-        soft_ellipse(ctx, x, y + 10, 260, 40, (1, 1, 1), 0.06 * p)
-        ctx.push_group()
-        ctx.translate(x, y)
-        k = 0.9 + 0.1 * ease_out_back(p)
-        ctx.scale(k, k)
-        car(ctx, 0, 0, 0.62, FER, t)
-        ctx.pop_group_to_source()
-        ctx.paint_with_alpha(0.12 + 0.88 * p)
-    mini_tag(ctx, "FERRARI 250 GT", 560, 1330, 600, 1180, appear(t, w(s_cars, "Ferrari") + 0.2, 0.4), col=FER)
+        light_up(ctx, photo("escena-03.jpg"), t, x, y, 240, 0.9 * p)
+        if p > 0:
+            glow(ctx, x, y + 30, 200, FER, 0.25 * p, add=True)
+    ptag(ctx, "FERRARI 250 GT", 800, 990, 640, 1300, appear(t, w(s_cars, "Ferrari") + 0.2, 0.4), col=WHITE)
 
 
 def s_clutch(ctx, t):
-    tech_bg(ctx, t)
-    ground(ctx, 1450, t)
+    clip_bg(ctx, photo("escena-04.jpg"), t, dim=0.0)
     fail = appear(t, w(s_clutch, "fallaba"), 0.4)
-    car(ctx, 540, 1450, 1.0, FER, t, shake=0.4 * fail)
-    if fail > 0:  # humo bajo el coche
-        for k in range(5):
-            u = (t * 0.9 + k / 5) % 1
-            disc(ctx, 520 + 60 * math.sin(k * 2.1) + 120 * u, 1400 - 200 * u, 20 + 40 * u, (0.6, 0.6, 0.62, 0.45 * (1 - u) * fail))
+    light_up(ctx, photo("escena-04.jpg"), t, 760, 1400, 400, 0.5 * fail * (0.8 + 0.2 * math.sin(t * 9)))  # más humo
     zoom = appear(t, w(s_clutch, "embrague"), 0.45)
-    if zoom > 0:
+    if zoom > 0:  # lupa sobre el embrague
         k = ease_out_back(zoom)
-        stroke(ctx, [(540, 1360), (540, 1060)], rgba(WHITE, 0.4 * zoom), 3)
-        disc(ctx, 540, 840, 230 * k, (0.05, 0.05, 0.07, 0.92))
+        stroke(ctx, [(330, 930), (420, 1340)], rgba(WHITE, 0.5 * zoom), 3)
+        disc(ctx, 300, 760, 175 * k, (0.05, 0.05, 0.07, 0.92))
         ctx.save()
         ctx.new_sub_path()
-        ctx.arc(540, 840, 225 * k, 0, 2 * math.pi)
+        ctx.arc(300, 760, 170 * k, 0, 2 * math.pi)
         ctx.clip()
-        clutch(ctx, 540, 840, 180 * k, t, broken=fail)
+        clutch(ctx, 300, 760, 135 * k, t, broken=fail)
         ctx.restore()
         ctx.new_sub_path()
-        ctx.arc(540, 840, 230 * k, 0, 2 * math.pi)
+        ctx.arc(300, 760, 175 * k, 0, 2 * math.pi)
         source(ctx, rgba(WHITE, 0.6 * zoom))
         ctx.set_line_width(5)
         ctx.stroke()
-        mini_tag(ctx, "EMBRAGUE", 640, 650, 600, 560, zoom, col=WHITE)
-    for word, (x, y) in (("una", (210, 760)), ("otra", (870, 900)), ("vez", (230, 1050))):
+        ptag(ctx, "EMBRAGUE", 420, 640, 600, 540, zoom, col=WHITE)
+    for word, (x, y) in (("una", (640, 640)), ("otra", (920, 1000)), ("vez", (150, 1150))):
         warning(ctx, x, y, 0.9, appear(t, w(s_clutch, word), 0.3))
 
 
 def s_complain(ctx, t):
-    tech_bg(ctx, t)
-    person(ctx, 250, 1160, 0.95, look=1)
-    factory(ctx, 770, 1450, 0.95)
-    car(ctx, 770, 1460, 0.42, FER, t)
-    mini_tag(ctx, "MARANELLO", 770, 1080, 700, 650, appear(t, w(s_complain, "fábrica"), 0.4), col=FER)
+    clip_bg(ctx, photo("escena-05.jpg"), t, dim=0.0)
+    ptag(ctx, "MARANELLO", 700, 760, 560, 560, appear(t, w(s_complain, "fábrica"), 0.4), col=FER)
 
     def angry(c):
         clutch(c, -60, 0, 52, t, broken=1.0)
         text(c, "!!", 60, 0, 90, col=RED)
-    bubble(ctx, 300, 760, 300, 190, (260, 1040), appear(t, w(s_complain, "quejarse"), 0.4), angry)
-    spaced(ctx, "SEGÚN CONTABA ÉL EN 1991", 540, 1585, 26, col=(1, 1, 1, 0.75 * appear(t, w(s_complain, "contaba"), 0.4)),
-           anchor="center")
+    bubble(ctx, 600, 1080, 300, 180, (838, 1310), appear(t, w(s_complain, "quejarse"), 0.4), angry)
+    pill(ctx, "SEGÚN CONTABA ÉL EN 1991", 540, 1585, a=appear(t, w(s_complain, "contaba"), 0.4))
 
 
 def s_reply(ctx, t):
-    tech_bg(ctx, t)
-    person(ctx, 230, 1200, 0.9, look=1)
+    clip_bg(ctx, photo("escena-06.jpg"), t, dim=0.0)
+    pill(ctx, "RECREACIÓN", 230, 520, size=24, col=(1, 1, 1, 0.9), a=appear(t, 0.05, 0.3))
     mad = appear(t, w(s_reply, "enfadado"), 0.4)
     if mad > 0:
-        glow(ctx, 850, 1180, 260, RED, 0.45 * mad * (0.8 + 0.2 * math.sin(t * 12)), add=True)
-    person(ctx, 850, 1200, 0.9, look=-1)
-    sunglasses(ctx, 850, 1200, 0.9, -1)
-    spaced(ctx, "FERRUCCIO", 230, 1020, 28, col=LAMBO, anchor="center")
-    spaced(ctx, "ENZO FERRARI", 850, 1020, 28, col=FER, anchor="center")
+        glow(ctx, 320, 1010, 230, RED, 0.35 * mad * (0.8 + 0.2 * math.sin(t * 12)), add=True)
+    ptag(ctx, "FERRUCCIO", 800, 830, 760, 560, appear(t, 0.1, 0.4), col=LAMBO)
+    ptag(ctx, "ENZO FERRARI", 300, 1080, 330, 1520, appear(t, w(s_reply, "dueño"), 0.4), col=FER)
     yes = appear(t, w(s_reply, "tractor"), 0.4)
     no = appear(t, w(s_reply, "nunca"), 0.4)
 
     def answer(c):
-        tractor(c, -130, 50, 0.32, t)
-        badge(c, -130, -70, yes, ok=True, r=34)
-        car(c, 140, 40, 0.34, FER, t)
-        badge(c, 140, -70, no, ok=False, r=34)
-    bubble(ctx, 600, 760, 520, 260, (790, 1010), appear(t, w(s_reply, "contestó"), 0.4), answer)
+        tractor(c, -105, 45, 0.28, t)
+        badge(c, -105, -62, yes, ok=True, r=30)
+        car(c, 115, 35, 0.3, FER, t)
+        badge(c, 115, -62, no, ok=False, r=30)
+    bubble(ctx, 330, 720, 420, 220, (330, 950), appear(t, w(s_reply, "contestó"), 0.4), answer)
 
 
 def s_perfect(ctx, t):
-    tech_bg(ctx, t)
-    ground(ctx, 1380, t)
     rev = appear(t, w(s_perfect, "perfecto") - 0.3, 0.6)
-    if rev > 0:  # foco desde arriba
-        poly(ctx, [(470, 560), (610, 560), (900, 1390), (180, 1390)], (1, 0.95, 0.75, 0.10 * rev))
-        glow(ctx, 540, 1300, 420, LAMBO, 0.35 * rev, add=True)
-    if rev < 1:  # cuadrícula del plano
-        for k in range(13):
-            a = 0.25 * (1 - rev)
-            stroke(ctx, [(160 + 63 * k, 1020), (160 + 63 * k, 1380)], (0.45, 0.80, 1.0, a), 2)
-        for k in range(7):
-            stroke(ctx, [(160, 1020 + 60 * k), (920, 1020 + 60 * k)], (0.45, 0.80, 1.0, 0.25 * (1 - rev)), 2)
-    car(ctx, 540, 1380, 0.95 * (1 + 0.05 * ease_out_back(rev)), LAMBO, t, blue=1 - rev)
+    clip_bg(ctx, photo("escena-07.jpg"), t, dim=0.55 * (1 - rev))  # en penumbra hasta «perfecto»
+    light_up(ctx, photo("escena-07.jpg"), t, 545, 1370, 470, 0.45 * (1 - rev))  # primero, los planos
+    light_up(ctx, photo("escena-07.jpg"), t, 545, 980, 520, 0.4 * rev)  # luego, el coche bajo el foco
     for j in range(8):
         u = (t * 0.7 + j / 8) % 1
         if rev > 0:
-            disc(ctx, 240 + 600 * ((j * 0.37) % 1), 1300 - 380 * u, 5, (1, 1, 0.85, rev * (1 - u)))
+            disc(ctx, 200 + 680 * ((j * 0.37) % 1), 1150 - 420 * u, 5, (1, 1, 0.85, rev * (1 - u)))
     panel(ctx, 580, 470, "NACE LAMBORGHINI", "1963", "", appear(t, w(s_perfect, "decidió"), 0.4), col=LAMBO, wdt=400)
 
 
 def s_bull(ctx, t):
-    tech_bg(ctx, t)
     bull = appear(t, w(s_bull, "toro"), 0.5)
     sign = appear(t, w(s_bull, "Tauro"), 0.5)
-    ring = appear(t, 0.05, 0.5)
-    ctx.save()  # rueda del zodiaco que gira despacio
-    ctx.translate(540, 930)
-    ctx.rotate(t * 0.15)
-    ctx.new_sub_path()
-    ctx.arc(0, 0, 340, 0, 2 * math.pi)
-    source(ctx, rgba(GOLD, 0.35 * ring))
-    ctx.set_line_width(4)
-    ctx.stroke()
-    for k in range(12):
-        a = k * math.pi / 6
-        stroke(ctx, [(318 * math.cos(a), 318 * math.sin(a)), (362 * math.cos(a), 362 * math.sin(a))], rgba(GOLD, 0.5 * ring), 4)
-        disc(ctx, 340 * math.cos(a + math.pi / 12), 340 * math.sin(a + math.pi / 12), 7, rgba(GOLD, 0.6 * ring))
-    ctx.restore()
-    if bull > 0:
-        glow(ctx, 540, 900, 420, GOLD, 0.35 * bull, add=True)
-        bull_head(ctx, 540, 930, 1.6 * ease_out_back(bull), a=clamp(bull * 2))
-    if sign > 0:
-        glow(ctx, 540, 1400, 200, YELLOW, 0.4 * sign, add=True)
-        taurus(ctx, 540, 1420, 1.15 * ease_out_back(sign), YELLOW, clamp(sign * 2))
-        spaced(ctx, "TAURO · 28 DE ABRIL DE 1916", 540, 1575, 30, col=(1, 1, 1, 0.8 * sign), anchor="center")
+    source(ctx, BULL_TOP)
+    ctx.paint()
+    clip_bg(ctx, photo("escena-08.jpg"), t, dim=0.3 * (1 - bull), dy=BULL_DY)
+    fade_top(ctx, BULL_TOP, BULL_DY - 10, BULL_DY + 160)
+    light_up(ctx, photo("escena-08.jpg"), t, 548, 1350, 560, 0.4 * bull, dy=BULL_DY)  # el toro se ilumina
+    if sign > 0:  # y luego su constelación
+        light_up(ctx, photo("escena-08.jpg"), t, 540, 340 + BULL_DY, 440, 1.1 * sign * (0.85 + 0.15 * math.sin(t * 7)), dy=BULL_DY)
+        glow(ctx, *ALDEBARAN, 120, GOLD, 0.6 * sign, add=True)
+    ptag(ctx, "TAURO", *ALDEBARAN, 760, 780, sign, col=YELLOW)
+    pill(ctx, "NACIÓ UN 28 DE ABRIL DE 1916", 540, 1585, col=GOLD, a=sign)
 
 
 def s_ask(ctx, t):
-    tech_bg(ctx, t)
     f = appear(t, w(s_ask, "Ferrari"), 0.4)
     lb = appear(t, w(s_ask, "Lamborghini"), 0.4)
-    for y, col, kind, name, on in ((930, FER, "gt", "FERRARI", f), (1420, LAMBO, "wedge", "LAMBORGHINI", lb)):
+    clip_bg(ctx, photo("escena-09.jpg"), t, dim=0.3)
+    for (x, y), col, name, on, ny in (((330, 1100), FER, "FERRARI", f, 880), ((760, 1100), LAMBO, "LAMBORGHINI", lb, 900)):
+        light_up(ctx, photo("escena-09.jpg"), t, x, y, 330, 0.6 * on)
         if on > 0:
-            glow(ctx, 540, y - 80, 380, col, 0.3 * on, add=True)
-        car(ctx, 540, y, 0.8 * (1 + 0.06 * ease_out_back(on)), col, t, kind=kind)
-        spaced(ctx, name, 540, y - 230, 44, col=rgba(col if on > 0.5 else WHITE, 0.45 + 0.55 * on), anchor="center")
-    text(ctx, "VS", 540, 1060, 70, col=(1, 1, 1, 0.85), outline=(0, 0, 0, 0.6), ow=10)
+            glow(ctx, x, y, 300, col, 0.3 * on, add=True)
+        spaced(ctx, name, x, ny, 40, col=rgba(col if on > 0.5 else WHITE, 0.55 + 0.45 * on), anchor="center")
+    text(ctx, "VS", 548, 760, 64, col=(1, 1, 1, 0.9), outline=(0, 0, 0, 0.6), ow=10)
 
 
 SCENES = [

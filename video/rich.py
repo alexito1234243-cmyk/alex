@@ -270,7 +270,7 @@ class Still:
     def __init__(self, path):
         raw = subprocess.run([
             "ffmpeg", "-loglevel", "error", "-i", path,
-            "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase,crop={W}:{H}",
+            "-vf", f"scale={W}:{H}:force_original_aspect_ratio=increase:flags=lanczos,crop={W}:{H},unsharp=5:5:0.5",
             "-f", "rawvideo", "-pix_fmt", "bgra", "-"], capture_output=True, check=True).stdout
         self.data = bytearray(raw)
         self.surf = cairo.ImageSurface.create_for_data(self.data, cairo.FORMAT_ARGB32, W, H, W * 4)
@@ -292,6 +292,24 @@ def clip_bg(ctx, clip, t, dim=0.25, dy=0):
     if dim > 0:
         ctx.set_source_rgba(0, 0, 0, dim)
         ctx.paint()
+
+
+def light_up(ctx, clip, t, x, y, r, k, dy=0):
+    """Enciende una zona del fondo (foto o clip): la vuelve a pintar encima sumando luz, sin taparla."""
+    if k <= 0:
+        return
+    ctx.save()
+    ctx.set_operator(cairo.OPERATOR_ADD)
+    ctx.set_source_surface(clip.frame(t), 0, dy)
+    ctx.mask(radial(x, y, r, [(0, (0, 0, 0, k)), (0.6, (0, 0, 0, 0.8 * k)), (1, (0, 0, 0, 0))]))
+    ctx.restore()
+
+
+def fade_top(ctx, col, y0, y1):
+    """Funde la parte de arriba de una foto con un color liso (tapa costuras y deja sitio a los subtítulos)."""
+    ctx.rectangle(0, 0, W, y1)
+    ctx.set_source(linear(0, y0, 0, y1, [(0, col), (1, rgba(col, 0))]))
+    ctx.fill()
 
 
 # ---------- escenas ----------

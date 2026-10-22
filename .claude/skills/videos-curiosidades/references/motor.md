@@ -97,10 +97,13 @@ Lo que sea propio de un tema (un ojo en corte, unos auriculares, un avión) va e
 - **Pasar puntos de la imagen a la pantalla.** Usa s = max(1080/ancho, 1920/alto); entonces x' = x·s − (ancho·s − 1080)/2 e y' = y·s − (alto·s − 1920)/2 + dy.
 - **Para alinear dibujos con algo de la foto**, mídelo con PIL. En `ojos_colores.py`, `NERVE_PTS` salió de buscar los píxeles amarillos del nervio.
 - **Dar vida a una foto fija.** La cámara ya acerca. Además puedes:
-  - repintar una zona con `OPERATOR_ADD` y una máscara radial, girándola despacio (`swirl` en `ojos_colores.py`);
-  - subir el brillo al decir la palabra clave;
+  - encender una zona con `light_up(ctx, foto, t, x, y, r, k, dy)` (`rich.py`): repinta la foto encima sumando luz. Sirve para iluminar cada coche al nombrarlo, la constelación al decir «Tauro» o una chispa que parpadea;
+  - poner el fondo en penumbra (`clip_bg(..., dim=0.45)`) y encender lo que se nombra;
+  - sacudir la cámara en el golpe del gancho (un `translate` con seno antes de `clip_bg`);
+  - girar despacio una zona repintada con `OPERATOR_ADD` (`swirl` en `ojos_colores.py`);
   - poner chispas encima.
-- **Costuras y bandas de relleno** de las imágenes generadas: tápalas con un degradado del color de fondo (`fade_top` en `ojos_colores.py`).
+- **Costuras y bandas de relleno** de las imágenes generadas: tápalas con un degradado del color de fondo, con `fade_top(ctx, color, y0, y1)` de `rich.py`.
+- **Etiquetas sobre fotos:** sobre una foto clara, el texto suelto no se lee. Usa `ptag` y `pill` (en `lamborghini_ferrari.py`): la misma línea de `mini_tag`, con el texto sobre una píldora oscura.
 
 ## 6. Sonido
 
@@ -134,6 +137,7 @@ Efectos por escena (`sfx`):
 
 | Script | Qué tiene de útil |
 |---|---|
+| `lamborghini_ferrari.py` | Una imagen de Flow por escena con `light_up`, sacudida de cámara, lupa dibujada encima de una foto, etiquetas sobre píldoras y «RECREACIÓN» en la escena pintada |
 | `ojos_colores.py` | Corte del ojo que se deforma, capas de la retina con disparos sincronizados con clics, imágenes de Flow (`Still`, `swirl`, `fade_top`, puntos medidos sobre la foto), cambio de foto a dibujo dentro de una escena |
 | `auriculares.py` | Ondas que se suman y se anulan, paneles con datos en directo, corte de un aparato con etiquetas, cierre de compartir |
 | `avion_luces.py` | El que mejor ha funcionado: cielo, avión, pista y pupila que se adapta |

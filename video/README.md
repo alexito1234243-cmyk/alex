@@ -15,7 +15,7 @@ Vídeos verticales (1080x1920) con dibujos animados a mano y subtítulos palabra
 - `ojos_colores.py`: ¿por qué ves colores al frotarte los ojos? (fosfenos de presión, tema 12 del lote). Estilo `TOP_SHORT`; guion, prompts de Flow y fuentes en `video/out/ojos-colores/guion.md`.
   Los efectos pueden ir un poco después de una palabra: `("@disparan+0.3", "tick")`.
   El gancho, el cerebro, los fosfenos y el retrato de Newton son imágenes de Flow (`video/assets/ojos-colores/`) que se pintan de fondo con `Still` y `clip_bg` (`rich.py`).
-- `lamborghini_ferrari.py`: ¿sabías que Lamborghini nació por un insulto de Ferrari? (tema 25, marcas famosas). Coches genéricos de perfil (gran turismo y cuña), tractor, embrague, bocadillos de cómic, plano que se convierte en coche y cabeza de toro; guion y fuentes en `video/out/lamborghini-ferrari/guion.md`.
+- `lamborghini_ferrari.py`: ¿sabías que Lamborghini nació por un insulto de Ferrari? (tema 25, marcas famosas). Una imagen de Flow por escena (`video/assets/lamborghini-ferrari/`) con etiquetas sobre píldoras, bocadillos de cómic, lupa del embrague y zonas de la foto que se encienden con `light_up`; guion, imágenes descartadas y fuentes en `video/out/lamborghini-ferrari/guion.md`.
 - `piezas.py`: fondo técnico, etiquetas, panel de datos y móvil compartidos por los vídeos de estilo técnico.
 - `portadas.py`: portadas diseñadas (título dentro de la franja 3:4 del perfil) y foto de perfil → `video/out/perfil/`.
 
